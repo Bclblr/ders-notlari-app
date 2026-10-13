@@ -15,6 +15,8 @@ import { createNotesArchiveFile, loadNotes, saveNotes } from "./src/storage/nati
 import * as Sharing from "expo-sharing";
 import RichNoteEditor from "./src/components/RichNoteEditor";
 import { createNotePdf } from "./src/services/pdfService";
+import AudioRecorderPanel from "./src/components/AudioRecorderPanel";
+import { loadRecordings, saveRecordings, type AudioRecording } from "./src/storage/nativeNotesStorage";
 
 type Tab = "notes" | "record" | "settings";
 
@@ -41,6 +43,8 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [recordings, setRecordings] = useState<AudioRecording[]>([]);
+  const [recordingsReady, setRecordingsReady] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -76,7 +80,7 @@ export default function App() {
     );
   }, [notes, search]);
 
-  function createNote() {
+  function onRecordingSaved(uri: string) {\n    const recording: AudioRecording = {\n      id: "recording-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8),\n      uri,\n      title: "Ders kaydı " + new Date().toLocaleDateString("tr-TR"),\n      createdAt: new Date().toISOString(),\n    };\n    setRecordings((current) => [recording, ...current]);\n  }\n\n  async function shareRecording(recording: AudioRecording) {\n    try {\n      if (!(await Sharing.isAvailableAsync())) { Alert.alert("Paylaşım kullanılamıyor", "Bu cihazda paylaşım menüsü açılamadı."); return; }\n      await Sharing.shareAsync(recording.uri, { dialogTitle: recording.title });\n    } catch { Alert.alert("Kayıt açılamadı", "Ses dosyası paylaşılamadı. Dosyanın cihazda mevcut olduğundan emin ol."); }\n  }\n\n  function createNote() {
     const note = makeNote({ title: "Yeni ders notu", body: "" });
     setNotes((current) => [note, ...current]);
     setSelectedId(note.id);
@@ -284,7 +288,7 @@ const styles = StyleSheet.create({
   deleteButtonText: { color: "#B4233B", fontWeight: "800" },
   exportButton: { width: "100%", maxWidth: 320, padding: 16, backgroundColor: "#6339B8", borderRadius: 14, alignItems: "center", marginTop: 18 },
   exportButtonText: { color: "#FFFFFF", fontWeight: "800", fontSize: 14 },
-  content: { flex: 1, paddingHorizontal: 20 },
+  content: { flex: 1, paddingHorizontal: 20 },\n  recordScreen: { flexGrow: 1, alignItems: "center", paddingHorizontal: 20, paddingBottom: 28, gap: 14 },\n  recordingsHeader: { width: "100%", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },\n  recordingRow: { width: "100%", flexDirection: "row", alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 15, borderWidth: 1, borderColor: "#EEE9F5", padding: 12, gap: 10 },\n  recordingShare: { backgroundColor: "#EEE8F8", paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },\n  recordingShareText: { color: "#6339B8", fontSize: 12, fontWeight: "800" },
   introCard: { backgroundColor: "#2D2043", borderRadius: 22, padding: 20, marginBottom: 20 },
   introIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: "#4A3767", alignItems: "center", justifyContent: "center", marginBottom: 14 },
   introIconText: { color: "#FFFFFF", fontSize: 22 },
