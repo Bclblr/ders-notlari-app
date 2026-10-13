@@ -3,7 +3,8 @@ import { File, Paths } from "expo-file-system";
 import type { Note, NotesArchive } from "../types/note";
 import type { AudioRecording } from "../types/recording";
 
-const NOTES_STORAGE_KEY = "@ders-notlarim/notes-v1";\nconst RECORDINGS_STORAGE_KEY = "@ders-notlarim/recordings-v1";\n\nexport type AudioRecording = { id: string; uri: string; title: string; createdAt: string };
+const NOTES_STORAGE_KEY = "@ders-notlarim/notes-v1";
+const RECORDINGS_STORAGE_KEY = "@ders-notlarim/recordings-v1";
 
 /**
  * Stores notes only in this app's local device storage.
