@@ -29,9 +29,9 @@ npx expo-doctor
 
 Ardından EAS ile yeni Android derlemesi al. Uygulamayı açıp Ayarlar > Kendi konumum alanına aynı anahtarı gir, kaydet ve konum paylaşımını başlat. iOS/Android izin penceresini kabul et.
 
-## 3. Web panelini yayınla
+## 3. Web sayfalarını yayınla
 
-`location-panel/index.html` statik bir sayfadır. Bu dosyayı Vercel gibi statik site barındırmasına yükleyebilir veya kendi bilgisayarında test edebilirsin. HTTPS üzerinden yayınla. Panelde aynı erişim anahtarını girip Bağlan'a bas.
+`location-panel/index.html` harita panelidir; `location-panel/share.html` ise telefondan konum gönderen sayfadır. İkisini de Vercel gibi statik site barındırmasına yükle veya GitHub Pages üzerinden yayınla. HTTPS zorunludur. iPhone'da share sayfasını açıp aynı anahtarı gir ve Paylaşımı başlat'a bas; harita panelinde aynı anahtarla Bağlan'a bas. Tarayıcı sayfası açık kaldığı sürece konum güncellemeleri gönderilir.
 
 ## Veri ve güvenlik
 
