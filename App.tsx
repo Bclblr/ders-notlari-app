@@ -129,13 +129,14 @@ export default function App() {
     );
   }, [notes, search]);
 
-  function onRecordingSaved(uri: string, details: { title: string; teacher?: string; subject?: string }) {
+  function onRecordingSaved(uri: string, details: { title: string; teacher?: string; subject?: string; waveform?: number[] }) {
     const savedRecording: AudioRecording = {
       id: "recording-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8),
       uri,
       title: details.title.trim() || "Ders kaydı " + new Date().toLocaleDateString("tr-TR"),
       teacher: details.teacher?.trim() || undefined,
       subject: details.subject?.trim() || undefined,
+      waveform: details.waveform,
       createdAt: new Date().toISOString(),
     };
     setRecordings((current) => [savedRecording, ...current]);
