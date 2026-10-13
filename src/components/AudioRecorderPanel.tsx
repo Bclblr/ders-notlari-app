@@ -87,7 +87,7 @@ export default function AudioRecorderPanel({ onRecordingSaved }: AudioRecorderPa
           {busy ? "İşleniyor..." : state.isRecording ? "■ Kaydı durdur" : "● Kaydı başlat"}
         </Text>
       </Pressable>
-      <Text style={styles.footnote}>Kayıtlar cihazda tutulur. Şimdilik otomatik yazıya çevirme ve kayıt listesi henüz eklenmedi.</Text>
+      <Text style={styles.footnote}>Kayıtlar cihazda tutulur. Kayıt listesi ve otomatik yazıya çevirme ana ekranda ayrı aşamalarda geliştiriliyor.</Text>
     </View>
   );
 }
