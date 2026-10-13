@@ -48,9 +48,9 @@ export default function RichNoteEditor({ value, onChange }: Props) {
           style={styles.richToolbar}
         />
         <View style={styles.colors}>
-          <Pressable accessibilityLabel="Mor yazı rengi" onPress={() => editorRef.current?.setTextColor("#6339B8")} style={[styles.colorDot, { backgroundColor: "#6339B8" }]} />
-          <Pressable accessibilityLabel="Kırmızı yazı rengi" onPress={() => editorRef.current?.setTextColor("#C62845")} style={[styles.colorDot, { backgroundColor: "#C62845" }]} />
-          <Pressable accessibilityLabel="Siyah yazı rengi" onPress={() => editorRef.current?.setTextColor("#2B203B")} style={[styles.colorDot, { backgroundColor: "#2B203B" }]} />
+          <Pressable accessibilityLabel="Mor yazı rengi" onPress={() => editorRef.current?.setForeColor("#6339B8")} style={[styles.colorDot, { backgroundColor: "#6339B8" }]} />
+          <Pressable accessibilityLabel="Kırmızı yazı rengi" onPress={() => editorRef.current?.setForeColor("#C62845")} style={[styles.colorDot, { backgroundColor: "#C62845" }]} />
+          <Pressable accessibilityLabel="Siyah yazı rengi" onPress={() => editorRef.current?.setForeColor("#2B203B")} style={[styles.colorDot, { backgroundColor: "#2B203B" }]} />
         </View>
       </View>
       <View style={styles.symbols}>
