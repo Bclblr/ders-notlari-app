@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Keyboard, Pressable, StyleSheet, Text, View } from "react-native";
 import { RichEditor, RichToolbar, actions, type RichEditor as RichEditorInstance } from "react-native-pell-rich-editor";
 
 type Props = {
@@ -37,6 +37,10 @@ export default function RichNoteEditor({ value, onChange }: Props) {
             actions.setUnderline,
             actions.heading1,
             actions.heading2,
+            actions.heading3,
+            actions.heading4,
+            actions.heading5,
+            actions.heading6,
             actions.insertBulletsList,
             actions.insertOrderedList,
             actions.undo,
@@ -47,10 +51,10 @@ export default function RichNoteEditor({ value, onChange }: Props) {
           disabledIconTint="#C4BCCD"
           style={styles.richToolbar}
         />
-        <View style={styles.colors}>
-          <Pressable accessibilityLabel="Mor yazı rengi" onPress={() => editorRef.current?.setForeColor("#6339B8")} style={[styles.colorDot, { backgroundColor: "#6339B8" }]} />
-          <Pressable accessibilityLabel="Kırmızı yazı rengi" onPress={() => editorRef.current?.setForeColor("#C62845")} style={[styles.colorDot, { backgroundColor: "#C62845" }]} />
-          <Pressable accessibilityLabel="Siyah yazı rengi" onPress={() => editorRef.current?.setForeColor("#2B203B")} style={[styles.colorDot, { backgroundColor: "#2B203B" }]} />
+        <View style={styles.colorSpectrum} accessibilityLabel="Yazı rengi degrade paleti">
+          {["#111827", "#6B7280", "#B91C1C", "#EA580C", "#D97706", "#65A30D", "#059669", "#0891B2", "#2563EB", "#6339B8", "#9333EA", "#DB2777"].map((color) => (
+            <Pressable key={color} accessibilityRole="button" accessibilityLabel={"Yazı rengini " + color + " yap"} onPress={() => editorRef.current?.setForeColor(color)} style={[styles.colorStop, { backgroundColor: color }]} />
+          ))}
         </View>
       </View>
       <View style={styles.symbols}>
@@ -62,6 +66,7 @@ export default function RichNoteEditor({ value, onChange }: Props) {
         ref={editorRef}
         initialContentHTML={initialHtml(value)}
         onChange={onChange}
+        onBlur={() => Keyboard.dismiss()}
         placeholder="Ders notlarını yazmaya başla…"
         editorStyle={{
           backgroundColor: "#FFFFFF",
@@ -73,7 +78,7 @@ export default function RichNoteEditor({ value, onChange }: Props) {
         useContainer={false}
         initialHeight={280}
       />
-      <Text style={styles.hint}>Biçimlendirme araçları: kalın, italik, altı çizili, madde işaretleri ve yazı rengi.</Text>
+      <Text style={styles.hint}>Biçimlendirme araçları: kalın, italik, altı çizili, H1–H6 başlıkları, listeler ve renk paleti.</Text>
     </View>
   );
 }
@@ -102,18 +107,22 @@ const styles = StyleSheet.create({
   symbols: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: "#FFFFFF", borderBottomWidth: 1, borderBottomColor: "#EEE9F5" },
   symbolButton: { minWidth: 27, height: 27, paddingHorizontal: 5, alignItems: "center", justifyContent: "center", backgroundColor: "#F0EAFB", borderRadius: 7 },
   symbolText: { color: "#6339B8", fontSize: 15, fontWeight: "700" },
-  colors: {
+  colorSpectrum: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 8,
+    justifyContent: "center",
+    gap: 3,
+    maxWidth: 112,
+    paddingHorizontal: 5,
+    paddingVertical: 5,
   },
-  colorDot: {
-    width: 18,
+  colorStop: {
+    width: 14,
     height: 18,
-    borderRadius: 9,
+    borderRadius: 4,
     borderWidth: 1,
-    borderColor: "#FFFFFF",
+    borderColor: "rgba(255,255,255,0.8)",
   },
   editor: {
     minHeight: 280,
