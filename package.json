@@ -24,7 +24,9 @@
     "react-native": "0.86.2",
     "react-native-pell-rich-editor": "1.10.0",
     "react-native-webview": "13.16.1",
-    "whisper.rn": "0.7.4"
+    "whisper.rn": "0.7.4",
+    "expo-document-picker": "~14.0.8",
+    "fflate": "^0.8.2"
   },
   "devDependencies": {
     "@types/react": "~19.2.0",
