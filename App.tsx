@@ -13,8 +13,24 @@ import {
 import { createNote as makeNote, type Note } from "./src/types/note";
 import { createNotesArchiveFile, loadNotes, saveNotes } from "./src/storage/nativeNotesStorage";
 import * as Sharing from "expo-sharing";
+import RichNoteEditor from "./src/components/RichNoteEditor";
 
 type Tab = "notes" | "record" | "settings";
+
+function htmlToPlainText(value: string): string {
+  return value
+    .replace(/<br\s*\/?\s*>/gi, " ")
+    .replace(/<\/(p|div|li|h[1-6])>/gi, " ")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("notes");
@@ -54,7 +70,7 @@ export default function App() {
     const q = search.trim().toLocaleLowerCase("tr-TR");
     if (!q) return notes;
     return notes.filter((note) =>
-      (note.title + " " + note.body).toLocaleLowerCase("tr-TR").includes(q)
+      (note.title + " " + htmlToPlainText(note.body)).toLocaleLowerCase("tr-TR").includes(q)
     );
   }, [notes, search]);
 
@@ -144,17 +160,9 @@ export default function App() {
               accessibilityLabel="Not başlığı"
             />
             <View style={styles.editorHint}>
-              <Text style={styles.editorHintText}>Ders notu · Bu aşamada taslak düzenleyici</Text>
+              <Text style={styles.editorHintText}>Ders notu · Zengin metin düzenleyici</Text>
             </View>
-            <TextInput
-              value={selectedNote.body}
-              onChangeText={(body) => updateSelected({ body })}
-              placeholder="Ders notlarını yazmaya başla…"
-              multiline
-              textAlignVertical="top"
-              style={styles.bodyInput}
-              accessibilityLabel="Not içeriği"
-            />
+            <RichNoteEditor key={selectedNote.id} value={selectedNote.body} onChange={(body) => updateSelected({ body })} />
             <Pressable accessibilityRole="button" style={styles.deleteButton} onPress={deleteSelectedNote}>
               <Text style={styles.deleteButtonText}>Notu sil</Text>
             </Pressable>
@@ -185,7 +193,7 @@ export default function App() {
                   <View style={styles.noteGlyph}><Text style={styles.noteGlyphText}>▤</Text></View>
                   <View style={styles.noteInfo}>
                     <Text style={styles.noteTitle} numberOfLines={1}>{note.title || "Başlıksız not"}</Text>
-                    <Text style={styles.notePreview} numberOfLines={2}>{note.body || "Henüz içerik yok"}</Text>
+                    <Text style={styles.notePreview} numberOfLines={2}>{htmlToPlainText(note.body) || "Henüz içerik yok"}</Text>
                   </View>
                   <Text style={styles.chevron}>›</Text>
                 </Pressable>
