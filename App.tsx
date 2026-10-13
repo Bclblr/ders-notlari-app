@@ -14,6 +14,7 @@ import { createNote as makeNote, type Note } from "./src/types/note";
 import { createNotesArchiveFile, loadNotes, saveNotes } from "./src/storage/nativeNotesStorage";
 import * as Sharing from "expo-sharing";
 import RichNoteEditor from "./src/components/RichNoteEditor";
+import { createNotePdf } from "./src/services/pdfService";
 
 type Tab = "notes" | "record" | "settings";
 
@@ -39,6 +40,7 @@ export default function App() {
   const [storageMessage, setStorageMessage] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -118,6 +120,28 @@ export default function App() {
     }
   }
 
+  async function exportSelectedNotePdf() {
+    if (!selectedNote || pdfBusy) return;
+    setPdfBusy(true);
+    try {
+      const uri = await createNotePdf(selectedNote);
+      const available = await Sharing.isAvailableAsync();
+      if (!available) {
+        Alert.alert("Paylaşım kullanılamıyor", "PDF oluşturuldu ancak bu cihazda paylaşım menüsü açılamadı.");
+        return;
+      }
+      await Sharing.shareAsync(uri, {
+        mimeType: "application/pdf",
+        dialogTitle: "Ders notunu PDF olarak paylaş",
+        UTI: "com.adobe.pdf",
+      });
+    } catch {
+      Alert.alert("PDF oluşturulamadı", "Not PDF'ye dönüştürülemedi. Daha sonra tekrar dene.");
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
   function updateSelected(changes: Partial<Note>) {
     if (!selectedId) return;
     setNotes((current) =>
@@ -163,6 +187,9 @@ export default function App() {
               <Text style={styles.editorHintText}>Ders notu · Zengin metin düzenleyici</Text>
             </View>
             <RichNoteEditor key={selectedNote.id} value={selectedNote.body} onChange={(body) => updateSelected({ body })} />
+            <Pressable accessibilityRole="button" style={styles.exportButton} onPress={exportSelectedNotePdf} disabled={pdfBusy}>
+              <Text style={styles.exportButtonText}>{pdfBusy ? "PDF hazırlanıyor..." : "↓ PDF oluştur ve paylaş"}</Text>
+            </Pressable>
             <Pressable accessibilityRole="button" style={styles.deleteButton} onPress={deleteSelectedNote}>
               <Text style={styles.deleteButtonText}>Notu sil</Text>
             </Pressable>
