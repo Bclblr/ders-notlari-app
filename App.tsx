@@ -11,7 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { createNote as makeNote, type Note } from "./src/types/note";
-import { createNotesArchiveFile, loadNotes, saveNotes } from "./src/storage/nativeNotesStorage";
+import { createNotesArchiveFile, deleteRecordingFile, loadNotes, saveNotes } from "./src/storage/nativeNotesStorage";
 import * as Sharing from "expo-sharing";
 import RichNoteEditor from "./src/components/RichNoteEditor";
 import { createNotePdf } from "./src/services/pdfService";
@@ -126,6 +126,36 @@ export default function App() {
     } catch {
       Alert.alert("Kayıt açılamadı", "Ses dosyası paylaşılamadı. Dosyanın cihazda mevcut olduğundan emin ol.");
     }
+  }
+ 
+  function createNoteFromRecording(recording: AudioRecording) {
+    const note = makeNote({
+      title: recording.title + " — Notlar",
+      body: "Bu ses kaydı için ders notlarını buraya yaz. Otomatik çevrimdışı konuşma tanıma henüz entegre edilmedi.",
+    });
+    setNotes((current) => [note, ...current]);
+    setSelectedId(note.id);
+    setTab("notes");
+  }
+
+  function deleteRecording(recording: AudioRecording) {
+    Alert.alert(
+      "Ses kaydı silinsin mi?",
+      "Bu işlem kayıt dosyasını ve arşivdeki bilgisini silmeye çalışır.",
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Sil",
+          style: "destructive",
+          onPress: () => {
+            setRecordings((current) => current.filter((item) => item.id !== recording.id));
+            deleteRecordingFile(recording.uri).catch(() => {
+              setStorageMessage("Kayıt arşivden kaldırıldı ancak dosya silinemedi.");
+            });
+          },
+        },
+      ]
+    );
   }
 
   function createNote() {
@@ -297,12 +327,13 @@ export default function App() {
                   <Text style={styles.notePreview}>{new Date(recording.createdAt).toLocaleString("tr-TR")}</Text>
                 </View>
                 <AudioRecordingPlayer uri={recording.uri} />
+                <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => createNoteFromRecording(recording)}><Text style={styles.recordingShareText}>Not yaz</Text></Pressable>
                 <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => shareRecording(recording)}>
                   <Text style={styles.recordingShareText}>Paylaş</Text>
                 </Pressable>
               </View>
             ))}
-            <Text style={styles.localHint}>Kayıt bilgileri cihazda saklanır. Henüz otomatik yazıya çevirme ve kayıt içinden oynatma eklenmedi.</Text>
+            <Text style={styles.localHint}>Kayıtlar cihazda tutulur. “Not yaz” ile kayda bağlı düzenlenebilir bir not açabilirsin; otomatik çevrimdışı yazıya çevirme henüz eklenmedi.</Text>
           </ScrollView>
 ) : (
           <View style={styles.placeholder}>
@@ -359,6 +390,8 @@ const styles = StyleSheet.create({
   recordingRow: { width: "100%", flexDirection: "row", alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 15, borderWidth: 1, borderColor: "#EEE9F5", padding: 12, gap: 10 },
   recordingShare: { backgroundColor: "#EEE8F8", paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },
   recordingShareText: { color: "#6339B8", fontSize: 12, fontWeight: "800" },
+  recordingDelete: { backgroundColor: "#FCE9EC", paddingHorizontal: 10, paddingVertical: 9, borderRadius: 10 },
+  recordingDeleteText: { color: "#B4233B", fontSize: 12, fontWeight: "800" },
   introCard: { backgroundColor: "#2D2043", borderRadius: 22, padding: 20, marginBottom: 20 },
   introIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: "#4A3767", alignItems: "center", justifyContent: "center", marginBottom: 14 },
   introIconText: { color: "#FFFFFF", fontSize: 22 },
