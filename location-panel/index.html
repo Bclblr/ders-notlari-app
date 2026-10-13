@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Kişisel Konum Paneli</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <style>
+    :root{color-scheme:light;--purple:#6339b8;--ink:#2b203b;--muted:#817792;--line:#eee9f5}
+    *{box-sizing:border-box}body{margin:0;background:#f7f5fc;color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    main{max-width:1000px;margin:0 auto;padding:22px 16px 40px}.eyebrow{font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--muted)}
+    h1{margin:7px 0 8px;font-size:clamp(25px,5vw,36px)}.sub{color:var(--muted);line-height:1.6;margin:0 0 20px}
+    .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 6px 24px #2b203b08}
+    label{display:block;font-size:12px;font-weight:800;margin-bottom:7px}.controls{display:flex;gap:9px;flex-wrap:wrap}
+    input{min-width:0;flex:1;background:#faf9fd;border:1px solid #e6e0ef;border-radius:12px;padding:12px;font:inherit}
+    button{border:0;border-radius:12px;background:var(--purple);color:white;font-weight:800;padding:12px 15px;cursor:pointer}
+    button.secondary{background:#eee8f8;color:var(--purple)}button:disabled{opacity:.55;cursor:wait}
+    #status{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.5}
+    .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}.metric{background:#faf9fd;border-radius:12px;padding:12px}
+    .metric span{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.metric strong{font-size:14px;overflow-wrap:anywhere}
+    #map{height:min(62vh,560px);min-height:300px;border-radius:14px;overflow:hidden}
+    .foot{font-size:12px;color:var(--muted);line-height:1.6;margin:14px 2px 0}
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">DERS NOTLARI · ÖZEL PANEL</div>
+  <h1>Kendi konumum</h1>
+  <p class="sub">iPhone uygulamasından gönderilen son konumu görüntüler. Panel, erişim anahtarını bu tarayıcıda saklar.</p>
+  <section class="card">
+    <label for="token">Konum paneli erişim anahtarı</label>
+    <div class="controls">
+      <input id="token" type="password" autocomplete="current-password" placeholder="Supabase LOCATION_ACCESS_TOKEN değeri">
+      <button id="connect">Bağlan</button>
+      <button id="forget" class="secondary" type="button">Anahtarı sil</button>
+    </div>
+    <div id="status" role="status">Bağlanmak için erişim anahtarını gir.</div>
+  </section>
+  <section class="card">
+    <div class="metrics">
+      <div class="metric"><span>Son kayıt zamanı</span><strong id="recorded">—</strong></div>
+      <div class="metric"><span>Konum doğruluğu</span><strong id="accuracy">—</strong></div>
+      <div class="metric"><span>Enlem</span><strong id="lat">—</strong></div>
+      <div class="metric"><span>Boylam</span><strong id="lon">—</strong></div>
+    </div>
+  </section>
+  <section class="card"><div id="map" aria-label="Konum haritası"></div></section>
+  <p class="foot">Gizlilik: Panel yalnızca en son konumu gösterir; geçmiş rota kaydı tutulmaz. Harita OpenStreetMap döşemelerini kullanır. Takip, iPhone uygulamasında izin verilip başlatılmalıdır. Bu sürümde uygulama arka plandayken sürekli takip yoktur.</p>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+(() => {
+  const url = "https://ynvosvngvuywizacyffn.supabase.co/functions/v1/device-location";
+  const anon = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inludm9zdm5ndnV5d2l6YWN5ZmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5MjY4NjgsImV4cCI6MjEwNzUwMjg2OH0.oYTu-WTtvJk1ISkFKYz19lE7JxUX_zd1ktFum_M74kc";
+  const $ = (id) => document.getElementById(id);
+  const map = L.map("map").setView([39.0, 35.0], 5);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+  let marker = null, circle = null, timer = null, busy = false;
+  const saved = localStorage.getItem("personal-location-access-token");
+  if (saved) $("token").value = saved;
+
+  async function loadLocation() {
+    if (busy) return;
+    const token = $("token").value.trim();
+    if (token.length < 32) { $("status").textContent = "Geçerli erişim anahtarını gir."; return; }
+    busy = true; $("connect").disabled = true; $("status").textContent = "Konum alınıyor…";
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "apikey": anon, "Authorization": "Bearer " + anon, "x-location-token": token },
+        body: JSON.stringify({ action: "latest" }),
+        cache: "no-store"
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Bağlantı başarısız.");
+      localStorage.setItem("personal-location-access-token", token);
+      if (!result.location) {
+        $("status").textContent = "Henüz konum gönderilmedi. iPhone uygulamasında Konum paylaşımını başlat.";
+        return;
+      }
+      const p = result.location, point = [p.latitude, p.longitude];
+      $("recorded").textContent = new Date(p.recorded_at).toLocaleString("tr-TR");
+      $("accuracy").textContent = p.accuracy_m == null ? "Belirtilmedi" : "±" + Math.round(p.accuracy_m) + " m";
+      $("lat").textContent = Number(p.latitude).toFixed(6);
+      $("lon").textContent = Number(p.longitude).toFixed(6);
+      if (!marker) marker = L.marker(point).addTo(map);
+      else marker.setLatLng(point);
+      marker.bindPopup("Son bilinen konum<br>" + new Date(p.recorded_at).toLocaleString("tr-TR"));
+      if (circle) circle.remove();
+      if (p.accuracy_m != null) circle = L.circle(point, { radius: p.accuracy_m, color: "#6339b8", fillOpacity: .12 }).addTo(map);
+      map.setView(point, Math.max(map.getZoom(), 15));
+      $("status").textContent = "Bağlandı. Son konum otomatik olarak 30 saniyede bir yenilenir.";
+    } catch (error) {
+      $("status").textContent = error instanceof Error ? error.message : "Bir hata oluştu.";
+    } finally {
+      busy = false; $("connect").disabled = false;
+    }
+  }
+
+  $("connect").addEventListener("click", () => {
+    if (timer) clearInterval(timer);
+    loadLocation();
+    timer = setInterval(loadLocation, 30000);
+  });
+  $("forget").addEventListener("click", () => {
+    if (timer) clearInterval(timer);
+    timer = null; localStorage.removeItem("personal-location-access-token"); $("token").value = "";
+    $("status").textContent = "Erişim anahtarı bu tarayıcıdan silindi.";
+  });
+})();
+</script>
+</body>
+</html>
