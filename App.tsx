@@ -19,6 +19,7 @@ import AudioRecorderPanel from "./src/components/AudioRecorderPanel";
 import AudioRecordingPlayer from "./src/components/AudioRecordingPlayer";
 import { loadRecordings, saveRecordings } from "./src/storage/nativeNotesStorage";
 import type { AudioRecording } from "./src/types/recording";
+import { transcribeAudioFile } from "./src/services/transcriptionService";
 
 type Tab = "notes" | "record" | "settings";
 
@@ -47,6 +48,8 @@ export default function App() {
   const [pdfBusy, setPdfBusy] = useState(false);
   const [recordings, setRecordings] = useState<AudioRecording[]>([]);
   const [recordingsReady, setRecordingsReady] = useState(false);
+  const [transcribingId, setTranscribingId] = useState<string | null>(null);
+  const [transcriptionProgress, setTranscriptionProgress] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -131,11 +134,37 @@ export default function App() {
   function createNoteFromRecording(recording: AudioRecording) {
     const note = makeNote({
       title: recording.title + " — Notlar",
-      body: "Bu ses kaydı için ders notlarını buraya yaz. Otomatik çevrimdışı konuşma tanıma henüz entegre edilmedi.",
+      body: "Bu ses kaydı için ders notlarını buraya yazabilir veya kaydı Türkçe olarak yazıya çevirebilirsin.",
     });
     setNotes((current) => [note, ...current]);
     setSelectedId(note.id);
     setTab("notes");
+  }
+
+  async function transcribeRecording(recording: AudioRecording) {
+    if (transcribingId) return;
+    setTranscribingId(recording.id);
+    setTranscriptionProgress(0);
+    try {
+      const text = await transcribeAudioFile(recording.uri, (progress) => setTranscriptionProgress(progress));
+      if (!text.trim()) {
+        Alert.alert("Metin bulunamadı", "Kayıtta anlaşılabilir konuşma tespit edilemedi.");
+        return;
+      }
+      const note = makeNote({
+        title: recording.title + " — Çözümleme",
+        body: text.trim(),
+      });
+      setNotes((current) => [note, ...current]);
+      setSelectedId(note.id);
+      setTab("notes");
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "Bilinmeyen hata";
+      Alert.alert("Yazıya çevirme başarısız", "Native uygulamanın derlendiğini ve modelin pakete eklendiğini kontrol et. " + detail);
+    } finally {
+      setTranscribingId(null);
+      setTranscriptionProgress(0);
+    }
   }
 
   function deleteRecording(recording: AudioRecording) {
@@ -328,6 +357,9 @@ export default function App() {
                 </View>
                 <AudioRecordingPlayer uri={recording.uri} />
                 <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => createNoteFromRecording(recording)}><Text style={styles.recordingShareText}>Not yaz</Text></Pressable>
+                <Pressable accessibilityRole="button" style={styles.recordingShare} disabled={!!transcribingId} onPress={() => transcribeRecording(recording)}>
+                  <Text style={styles.recordingShareText}>{transcribingId === recording.id ? "Çözülüyor %" + transcriptionProgress : "Yazıya çevir"}</Text>
+                </Pressable>
                 <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => shareRecording(recording)}>
                   <Text style={styles.recordingShareText}>Paylaş</Text>
                 </Pressable>
@@ -336,7 +368,7 @@ export default function App() {
                 </Pressable>
               </View>
             ))}
-            <Text style={styles.localHint}>Kayıtlar cihazda tutulur. “Not yaz” ile kayda bağlı düzenlenebilir bir not açabilirsin; otomatik çevrimdışı yazıya çevirme henüz eklenmedi.</Text>
+            <Text style={styles.localHint}>Kayıtlar cihazda tutulur. “Yazıya çevir” düğmesi çok dilli Whisper Base ile Türkçe metin üretir; native derleme ve cihaz testi gerekir.</Text>
           </ScrollView>
 ) : (
           <View style={styles.placeholder}>
