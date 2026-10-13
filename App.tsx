@@ -493,8 +493,6 @@ const styles = StyleSheet.create({
   recordingShareText: { color: "#6339B8", fontSize: 12, fontWeight: "800" },
   recordingDelete: { backgroundColor: "#FCE9EC", paddingHorizontal: 10, paddingVertical: 9, borderRadius: 10 },
   recordingDeleteText: { color: "#B4233B", fontSize: 12, fontWeight: "800" },
-  recordingDelete: { backgroundColor: "#FCE9EC", paddingHorizontal: 10, paddingVertical: 9, borderRadius: 10 },
-  recordingDeleteText: { color: "#B4233B", fontSize: 12, fontWeight: "800" },
   introCard: { backgroundColor: "#2D2043", borderRadius: 22, padding: 20, marginBottom: 20 },
   introIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: "#4A3767", alignItems: "center", justifyContent: "center", marginBottom: 14 },
   introIconText: { color: "#FFFFFF", fontSize: 22 },
