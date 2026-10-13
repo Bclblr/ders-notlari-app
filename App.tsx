@@ -261,7 +261,7 @@ export default function App() {
             if (asset.name.toLowerCase().endsWith(".zip") || asset.mimeType === "application/zip") {
               const restored = await restoreFullArchive(asset.uri);
               await saveNotes(restored.notes); await saveRecordings(restored.recordings);
-              setNotes(restored.notes); setRecordings(restored.recordings); setSelectedId(null);
+              setNotes(restored.notes); setRecordings(restored.recordings); setRecordingsReady(true); setSelectedId(null);
               Alert.alert("Yedek geri yüklendi", restored.notes.length + " not ve " + restored.recordings.length + " ses kaydı geri yüklendi.");
             } else {
               const restoredNotes = await readLegacyNotesJson(await new File(asset.uri).text());
