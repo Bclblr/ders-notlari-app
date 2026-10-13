@@ -5,12 +5,17 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/images/icon.png",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bclblr.dersnotlarim"
     },
     "android": {
-      "package": "com.bclblr.dersnotlarim"
+      "package": "com.bclblr.dersnotlarim",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#6339B8"
+      }
     },
     "plugins": [
       [
