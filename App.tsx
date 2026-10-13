@@ -9,10 +9,16 @@ import {
   View,
   ScrollView,
   Alert,
+  Modal,
 } from "react-native";
 import { createNote as makeNote, type Note } from "./src/types/note";
 import { createNotesArchiveFile, deleteRecordingFile, loadNotes, saveNotes } from "./src/storage/nativeNotesStorage";
 import * as Sharing from "expo-sharing";
+import * as DocumentPicker from "expo-document-picker";
+import * as Print from "expo-print";
+import { File } from "expo-file-system";
+import { WebView } from "react-native-webview";
+import { createFullArchiveFile, readLegacyNotesJson, restoreFullArchive } from "./src/services/archiveService";
 import RichNoteEditor from "./src/components/RichNoteEditor";
 import { createNotePdf } from "./src/services/pdfService";
 import AudioRecorderPanel from "./src/components/AudioRecorderPanel";
@@ -58,6 +64,8 @@ export default function App() {
   const [recordingsReady, setRecordingsReady] = useState(false);
   const [transcribingId, setTranscribingId] = useState<string | null>(null);
   const [transcriptionProgress, setTranscriptionProgress] = useState(0);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [archiveBusy, setArchiveBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -88,8 +96,7 @@ export default function App() {
       })
       .catch(() => {
         if (active) {
-          setStorageMessage("Ses kaydı arşivi okunamadı.");
-          setRecordingsReady(true);
+          setStorageMessage("Ses kaydı arşivi okunamadı. Veri kaybını önlemek için boş arşiv kaydedilmedi.");
         }
       });
     return () => { active = false; };
@@ -222,21 +229,63 @@ export default function App() {
   }
 
   async function exportArchive() {
+    if (archiveBusy) return;
+    setArchiveBusy(true);
     try {
-      const uri = await createNotesArchiveFile(notes);
+      const uri = await createFullArchiveFile(notes, recordings);
       const available = await Sharing.isAvailableAsync();
       if (!available) {
         Alert.alert("Paylaşım kullanılamıyor", "Bu cihazda paylaşım menüsü açılamadı.");
         return;
       }
       await Sharing.shareAsync(uri, {
-        mimeType: "application/json",
-        dialogTitle: "Ders notları yedeğini paylaş",
-        UTI: "public.json",
+        mimeType: "application/zip",
+        dialogTitle: "Ders Notlarım tam yedeğini paylaş",
+        UTI: "public.zip",
       });
     } catch {
-      Alert.alert("Dışa aktarma başarısız", "Not arşivi oluşturulamadı. Daha sonra tekrar dene.");
-    }
+      Alert.alert("Dışa aktarma başarısız", "Tam yedek oluşturulamadı. Ses dosyalarının cihazda bulunduğunu ve yeterli boş alan olduğunu kontrol et.");
+    } finally { setArchiveBusy(false); }
+  }
+
+  async function importArchive() {
+    if (archiveBusy) return;
+    try {
+      const picked = await DocumentPicker.getDocumentAsync({ type: ["application/zip", "application/json", "application/octet-stream"], copyToCacheDirectory: true, multiple: false });
+      if (picked.canceled || !picked.assets?.[0]) return;
+      const asset = picked.assets[0];
+      Alert.alert("Yedek geri yüklensin mi?", "Mevcut notlar değiştirilecek. ZIP tam yedeği seçtiysen ses kayıtları da geri yüklenecek. Önce mevcut verilerini yedekle.", [
+        { text: "Vazgeç", style: "cancel" },
+        { text: "Geri yükle", style: "destructive", onPress: async () => {
+          setArchiveBusy(true);
+          try {
+            if (asset.name.toLowerCase().endsWith(".zip") || asset.mimeType === "application/zip") {
+              const restored = await restoreFullArchive(asset.uri);
+              await saveNotes(restored.notes); await saveRecordings(restored.recordings);
+              setNotes(restored.notes); setRecordings(restored.recordings); setSelectedId(null);
+              Alert.alert("Yedek geri yüklendi", restored.notes.length + " not ve " + restored.recordings.length + " ses kaydı geri yüklendi.");
+            } else {
+              const restoredNotes = await readLegacyNotesJson(await new File(asset.uri).text());
+              await saveNotes(restoredNotes); setNotes(restoredNotes); setSelectedId(null);
+              Alert.alert("Notlar geri yüklendi", restoredNotes.length + " not içe aktarıldı. Eski JSON yedeği ses dosyalarını içermez.");
+            }
+          } catch (error) {
+            Alert.alert("Geri yükleme başarısız", error instanceof Error ? error.message : "Bilinmeyen hata");
+          } finally { setArchiveBusy(false); }
+        } },
+      ]);
+    } catch { Alert.alert("Dosya açılamadı", "Yedek dosyası seçilemedi. Tekrar dene."); }
+  }
+
+  function makePreviewHtml(note: Note): string {
+    const safeTitle = (note.title || "Başlıksız ders notu").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return "<!doctype html><html lang=\"tr\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><style>body{font-family:Arial,sans-serif;padding:22px;color:#292235;line-height:1.65;overflow-wrap:break-word}h1{color:#39245c}img{max-width:100%}table{border-collapse:collapse;max-width:100%}td,th{border:1px solid #ddd;padding:5px}</style></head><body><h1>" + safeTitle + "</h1>" + (note.body || "") + "</body></html>";
+  }
+
+  async function printSelectedNote() {
+    if (!selectedNote) return;
+    try { await Print.printAsync({ html: makePreviewHtml(selectedNote) }); }
+    catch { Alert.alert("Yazdırma açılamadı", "Cihazın yazdırma hizmeti kullanılamıyor."); }
   }
 
   async function exportSelectedNotePdf() {
@@ -306,6 +355,8 @@ export default function App() {
               <Text style={styles.editorHintText}>Ders notu · Zengin metin düzenleyici</Text>
             </View>
             <RichNoteEditor key={selectedNote.id} value={selectedNote.body} onChange={(body) => updateSelected({ body })} />
+            <Pressable accessibilityRole="button" style={styles.exportButton} onPress={() => setPreviewVisible(true)}><Text style={styles.exportButtonText}>Notu önizle</Text></Pressable>
+            <Pressable accessibilityRole="button" style={styles.exportButton} onPress={printSelectedNote}><Text style={styles.exportButtonText}>Yazdır</Text></Pressable>
             <Pressable accessibilityRole="button" style={styles.exportButton} onPress={exportSelectedNotePdf} disabled={pdfBusy}>
               <Text style={styles.exportButtonText}>{pdfBusy ? "PDF hazırlanıyor..." : "↓ PDF oluştur ve paylaş"}</Text>
             </Pressable>
@@ -386,12 +437,16 @@ export default function App() {
             <View style={styles.settingRow}><Text style={styles.settingLabel}>Çevrimdışı çalışma</Text><Text style={styles.settingValue}>Hedefleniyor</Text></View>
             <View style={styles.settingRow}><Text style={styles.settingLabel}>Yerel arşiv</Text><Text style={styles.settingValue}>Hazır</Text></View>
             <Pressable accessibilityRole="button" style={styles.exportButton} onPress={exportArchive}>
-              <Text style={styles.exportButtonText}>↗ Notları yedekle (JSON)</Text>
+              <Text style={styles.exportButtonText}>↗ Tam yedek oluştur (ZIP)</Text>
             </Pressable>
-            <Text style={styles.localHint}>Yedek dosyası cihazındaki paylaşım menüsüyle Dosyalar'a veya başka bir konuma kaydedilebilir.</Text>
+            <Pressable accessibilityRole="button" style={styles.exportButton} onPress={importArchive} disabled={archiveBusy}><Text style={styles.exportButtonText}>↙ Yedekten geri yükle</Text></Pressable>
+            <Text style={styles.localHint}>ZIP tam yedeği notları ve ses dosyalarını içerir. Eski JSON yedekleri yalnızca notları geri yükler.</Text>
           </View>
         )}
 
+        {selectedNote ? (
+          <Modal visible={previewVisible} animationType="slide" onRequestClose={() => setPreviewVisible(false)}><SafeAreaView style={styles.previewSafe}><View style={styles.previewHeader}><Text style={styles.previewTitle}>Not önizlemesi</Text><Pressable style={styles.backButton} onPress={() => setPreviewVisible(false)}><Text style={styles.backButtonText}>Kapat</Text></Pressable></View><WebView originWhitelist={["*"]} source={{ html: makePreviewHtml(selectedNote) }} style={styles.previewWeb} /><Pressable style={styles.exportButton} onPress={printSelectedNote}><Text style={styles.exportButtonText}>Yazdır</Text></Pressable></SafeAreaView></Modal>
+        ) : null}
         {!selectedNote ? (
           <View style={styles.tabBar}>
             <TabButton label="Notlar" symbol="▤" active={tab === "notes"} onPress={() => setTab("notes")} />
@@ -415,6 +470,10 @@ function TabButton({ label, symbol, active, onPress }: { label: string; symbol: 
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#F7F5FC" },
+  previewSafe: { flex: 1, backgroundColor: "#F7F5FC", padding: 12 },
+  previewHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 10 },
+  previewTitle: { fontSize: 20, fontWeight: "800", color: "#2B203B" },
+  previewWeb: { flex: 1, backgroundColor: "#FFFFFF", borderRadius: 12 },
   app: { flex: 1, backgroundColor: "#F7F5FC" },
   header: { paddingHorizontal: 22, paddingTop: 18, paddingBottom: 18, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   eyebrow: { fontSize: 10, fontWeight: "800", letterSpacing: 1.5, color: "#817792", marginBottom: 7 },
