@@ -16,7 +16,8 @@ import * as Sharing from "expo-sharing";
 import RichNoteEditor from "./src/components/RichNoteEditor";
 import { createNotePdf } from "./src/services/pdfService";
 import AudioRecorderPanel from "./src/components/AudioRecorderPanel";
-import { loadRecordings, saveRecordings, type AudioRecording } from "./src/storage/nativeNotesStorage";
+import { loadRecordings, saveRecordings } from "./src/storage/nativeNotesStorage";
+import type { AudioRecording } from "./src/types/recording";
 
 type Tab = "notes" | "record" | "settings";
 
@@ -233,13 +234,29 @@ export default function App() {
             </ScrollView>
           </View>
         ) : tab === "record" ? (
-          <View style={styles.placeholder}>
-            <View style={styles.micCircle}><Text style={styles.micEmoji}>🎙</Text></View>
-            <Text style={styles.placeholderTitle}>Dersi kaydet</Text>
-            <Text style={styles.placeholderBody}>Ses kaydı ve Türkçe çevrimdışı yazıya çevirme bu aşamalarda eklenecek.</Text>
-            <View style={styles.statusPill}><View style={styles.statusDot} /><Text style={styles.statusText}>Kayıt özelliği sıradaki aşamalarda</Text></View>
-          </View>
-        ) : (
+          <ScrollView contentContainerStyle={styles.recordScreen}>
+            <AudioRecorderPanel onRecordingSaved={onRecordingSaved} />
+            <View style={styles.recordingsHeader}>
+              <Text style={styles.sectionTitle}>KAYITLARIM</Text>
+              <Text style={styles.count}>{recordings.length} kayıt</Text>
+            </View>
+            {recordings.length === 0 ? (
+              <Text style={styles.empty}>Henüz ses kaydı yok. İlk kaydını yukarıdan başlatabilirsin.</Text>
+            ) : recordings.map((recording) => (
+              <View key={recording.id} style={styles.recordingRow}>
+                <View style={styles.noteGlyph}><Text style={styles.noteGlyphText}>◉</Text></View>
+                <View style={styles.noteInfo}>
+                  <Text style={styles.noteTitle} numberOfLines={1}>{recording.title}</Text>
+                  <Text style={styles.notePreview}>{new Date(recording.createdAt).toLocaleString("tr-TR")}</Text>
+                </View>
+                <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => shareRecording(recording)}>
+                  <Text style={styles.recordingShareText}>Paylaş</Text>
+                </Pressable>
+              </View>
+            ))}
+            <Text style={styles.localHint}>Kayıt bilgileri cihazda saklanır. Henüz otomatik yazıya çevirme ve kayıt içinden oynatma eklenmedi.</Text>
+          </ScrollView>
+) : (
           <View style={styles.placeholder}>
             <View style={styles.micCircle}><Text style={styles.micEmoji}>⚙</Text></View>
             <Text style={styles.placeholderTitle}>Uygulama tercihleri</Text>
@@ -288,7 +305,12 @@ const styles = StyleSheet.create({
   deleteButtonText: { color: "#B4233B", fontWeight: "800" },
   exportButton: { width: "100%", maxWidth: 320, padding: 16, backgroundColor: "#6339B8", borderRadius: 14, alignItems: "center", marginTop: 18 },
   exportButtonText: { color: "#FFFFFF", fontWeight: "800", fontSize: 14 },
-  content: { flex: 1, paddingHorizontal: 20 },\n  recordScreen: { flexGrow: 1, alignItems: "center", paddingHorizontal: 20, paddingBottom: 28, gap: 14 },\n  recordingsHeader: { width: "100%", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },\n  recordingRow: { width: "100%", flexDirection: "row", alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 15, borderWidth: 1, borderColor: "#EEE9F5", padding: 12, gap: 10 },\n  recordingShare: { backgroundColor: "#EEE8F8", paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },\n  recordingShareText: { color: "#6339B8", fontSize: 12, fontWeight: "800" },
+  content: { flex: 1, paddingHorizontal: 20 },
+  recordScreen: { flexGrow: 1, alignItems: "center", paddingHorizontal: 20, paddingBottom: 28, gap: 14 },
+  recordingsHeader: { width: "100%", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },
+  recordingRow: { width: "100%", flexDirection: "row", alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 15, borderWidth: 1, borderColor: "#EEE9F5", padding: 12, gap: 10 },
+  recordingShare: { backgroundColor: "#EEE8F8", paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },
+  recordingShareText: { color: "#6339B8", fontSize: 12, fontWeight: "800" },\n  recordScreen: { flexGrow: 1, alignItems: "center", paddingHorizontal: 20, paddingBottom: 28, gap: 14 },\n  recordingsHeader: { width: "100%", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },\n  recordingRow: { width: "100%", flexDirection: "row", alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 15, borderWidth: 1, borderColor: "#EEE9F5", padding: 12, gap: 10 },\n  recordingShare: { backgroundColor: "#EEE8F8", paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },\n  recordingShareText: { color: "#6339B8", fontSize: 12, fontWeight: "800" },
   introCard: { backgroundColor: "#2D2043", borderRadius: 22, padding: 20, marginBottom: 20 },
   introIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: "#4A3767", alignItems: "center", justifyContent: "center", marginBottom: 14 },
   introIconText: { color: "#FFFFFF", fontSize: 22 },
