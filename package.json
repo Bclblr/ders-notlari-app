@@ -26,7 +26,8 @@
     "react-native-webview": "13.16.1",
     "whisper.rn": "0.7.4",
     "expo-document-picker": "~14.0.8",
-    "fflate": "^0.8.2"
+    "fflate": "^0.8.2",
+    "react-native-lossless-trim": "^0.1.1"
   },
   "devDependencies": {
     "@types/react": "~19.2.0",
