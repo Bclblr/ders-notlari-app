@@ -1,4 +1,4 @@
-import { initWhisper } from "whisper.rn";
+import { initWhisper } from "whisper.rn/index";
 
 export async function transcribeAudioFile(
   audioUri: string,
