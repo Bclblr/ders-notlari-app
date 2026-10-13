@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { File, Paths } from "expo-file-system";
 import type { Note, NotesArchive } from "../types/note";
+import type { AudioRecording } from "../types/recording";
 
 const NOTES_STORAGE_KEY = "@ders-notlarim/notes-v1";\nconst RECORDINGS_STORAGE_KEY = "@ders-notlarim/recordings-v1";\n\nexport type AudioRecording = { id: string; uri: string; title: string; createdAt: string };
 
@@ -22,6 +23,18 @@ export async function loadNotes(): Promise<Note[]> {
 
 export async function saveNotes(notes: Note[]): Promise<void> {
   await AsyncStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+}
+
+export async function loadRecordings(): Promise<AudioRecording[]> {
+  const raw = await AsyncStorage.getItem(RECORDINGS_STORAGE_KEY);
+  if (!raw) return [];
+  const parsed: unknown = JSON.parse(raw);
+  if (!Array.isArray(parsed)) throw new Error("Ses kaydı arşivi beklenen biçimde değil.");
+  return parsed.filter((item): item is AudioRecording => !!item && typeof item === "object" && typeof (item as AudioRecording).id === "string" && typeof (item as AudioRecording).uri === "string" && typeof (item as AudioRecording).title === "string" && typeof (item as AudioRecording).createdAt === "string");
+}
+
+export async function saveRecordings(recordings: AudioRecording[]): Promise<void> {
+  await AsyncStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
 }
 
 export async function exportNotesArchive(notes: Note[]): Promise<string> {
