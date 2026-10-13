@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { File, Paths } from "expo-file-system";
 import type { Note, NotesArchive } from "../types/note";
 
-const NOTES_STORAGE_KEY = "@ders-notlarim/notes-v1";
+const NOTES_STORAGE_KEY = "@ders-notlarim/notes-v1";\nconst RECORDINGS_STORAGE_KEY = "@ders-notlarim/recordings-v1";\n\nexport type AudioRecording = { id: string; uri: string; title: string; createdAt: string };
 
 /**
  * Stores notes only in this app's local device storage.
