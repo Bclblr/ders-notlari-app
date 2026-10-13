@@ -27,7 +27,8 @@
     "whisper.rn": "0.7.4",
     "expo-document-picker": "~14.0.8",
     "fflate": "^0.8.2",
-    "react-native-video-trim": "^8.2.4"
+    "react-native-video-trim": "^8.2.4",
+    "expo-location": "~57.0.8"
   },
   "devDependencies": {
     "@types/react": "~19.2.0",
