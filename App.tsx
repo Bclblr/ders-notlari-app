@@ -23,6 +23,7 @@ import RichNoteEditor from "./src/components/RichNoteEditor";
 import { createNotePdf } from "./src/services/pdfService";
 import AudioRecorderPanel from "./src/components/AudioRecorderPanel";
 import AudioRecordingEditor from "./src/components/AudioRecordingEditor";
+import LocationTracker from "./src/components/LocationTracker";
 import type { AudioRecording } from "./src/types/recording";
 import { transcribeAudioFile } from "./src/services/transcriptionService";
 
@@ -470,6 +471,7 @@ export default function App() {
             </Pressable>
             <Pressable accessibilityRole="button" style={styles.exportButton} onPress={importArchive} disabled={archiveBusy}><Text style={styles.exportButtonText}>↙ Yedekten geri yükle</Text></Pressable>
             <Text style={styles.localHint}>ZIP tam yedeği notları ve ses dosyalarını içerir. Eski JSON yedekleri yalnızca notları geri yükler.</Text>
+            <LocationTracker />
           </View>
         )}
 
