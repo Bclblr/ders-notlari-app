@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { File, Paths } from "expo-file-system";
 import type { Note, NotesArchive } from "../types/note";
 
 const NOTES_STORAGE_KEY = "@ders-notlarim/notes-v1";
@@ -31,6 +32,15 @@ export async function exportNotesArchive(notes: Note[]): Promise<string> {
   };
 
   return JSON.stringify(archive, null, 2);
+}
+
+export async function createNotesArchiveFile(notes: Note[]): Promise<string> {
+  const json = await exportNotesArchive(notes);
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const file = new File(Paths.cache, `ders-notlarim-yedek-${timestamp}.json`);
+  file.create();
+  file.write(json);
+  return file.uri;
 }
 
 export async function importNotesArchive(json: string): Promise<Note[]> {
