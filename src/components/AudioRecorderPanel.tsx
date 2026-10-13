@@ -111,13 +111,13 @@ export default function AudioRecorderPanel({ onRecordingSaved }: AudioRecorderPa
 }
 
 const styles = StyleSheet.create({
-  card: { width: "100%", maxWidth: 380, alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 22, padding: 24, borderWidth: 1, borderColor: "#EEE9F5" },
+  card: { width: "100%", maxWidth: 460, alignSelf: "center", minWidth: 0, alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 20, paddingHorizontal: 16, paddingVertical: 20, borderWidth: 1, borderColor: "#EEE9F5" },
   micBadge: { width: 64, height: 64, borderRadius: 22, backgroundColor: "#F0EAFB", alignItems: "center", justifyContent: "center", marginBottom: 18 },
   mic: { color: "#6339B8", fontSize: 26 },
-  title: { fontSize: 21, fontWeight: "800", color: "#2B203B", marginBottom: 10 },
-  timer: { fontSize: 34, fontWeight: "800", fontVariant: ["tabular-nums"], color: "#6339B8", marginBottom: 10 },
+  title: { fontSize: 20, textAlign: "center", flexShrink: 1, fontWeight: "800", color: "#2B203B", marginBottom: 10 },
+  timer: { fontSize: 32, fontWeight: "800", fontVariant: ["tabular-nums"], color: "#6339B8", marginBottom: 10 },
   caption: { textAlign: "center", color: "#817792", fontSize: 13, lineHeight: 19, marginBottom: 18 },
-  metadataInput: { width: "100%", backgroundColor: "#F8F6FB", borderColor: "#EAE5F2", borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11, color: "#2B203B", marginBottom: 9, fontSize: 13 },
+  metadataInput: { width: "100%", minWidth: 0, backgroundColor: "#F8F6FB", borderColor: "#EAE5F2", borderWidth: 1, borderRadius: 12, paddingHorizontal: 11, paddingVertical: 12, color: "#2B203B", marginBottom: 9, fontSize: 13 },
   button: { width: "100%", backgroundColor: "#6339B8", paddingVertical: 15, borderRadius: 14, alignItems: "center" },
   stopButton: { backgroundColor: "#B4233B" },
   disabled: { opacity: 0.55 },
