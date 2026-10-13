@@ -47,10 +47,14 @@ export default function AudioRecordingEditor({ recording, onClose, onSaveCopy }:
   }, [recording?.id]);
 
   useEffect(() => {
-    if (!status.playing) return;
+    if (duration > 0 && endText === "00:00") setEndText(formatTime(duration));
+  }, [duration, endText]);
+
+  useEffect(() => {
+    if (!status.playing || duration <= 0) return;
     const end = parseTime(endText);
-    if (end !== null && currentTime >= end) player.pause();
-  }, [currentTime, endText, status.playing]);
+    if (end !== null && end > 0 && currentTime >= end) player.pause();
+  }, [currentTime, duration, endText, status.playing]);
 
   const range = useMemo(() => {
     const start = parseTime(startText);
