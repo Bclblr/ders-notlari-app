@@ -65,6 +65,10 @@ export default function App() {
   const [transcriptionProgress, setTranscriptionProgress] = useState(0);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [archiveBusy, setArchiveBusy] = useState(false);
+  const [editingRecording, setEditingRecording] = useState<AudioRecording | null>(null);
+  const [recordingTitleDraft, setRecordingTitleDraft] = useState("");
+  const [recordingTeacherDraft, setRecordingTeacherDraft] = useState("");
+  const [recordingSubjectDraft, setRecordingSubjectDraft] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -123,14 +127,36 @@ export default function App() {
     );
   }, [notes, search]);
 
-  function onRecordingSaved(uri: string) {
-    const recording: AudioRecording = {
+  function onRecordingSaved(uri: string, details: { title: string; teacher?: string; subject?: string }) {
+    const savedRecording: AudioRecording = {
       id: "recording-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8),
       uri,
-      title: "Ders kaydı " + new Date().toLocaleDateString("tr-TR"),
+      title: details.title.trim() || "Ders kaydı " + new Date().toLocaleDateString("tr-TR"),
+      teacher: details.teacher?.trim() || undefined,
+      subject: details.subject?.trim() || undefined,
       createdAt: new Date().toISOString(),
     };
-    setRecordings((current) => [recording, ...current]);
+    setRecordings((current) => [savedRecording, ...current]);
+  }
+
+  function openRecordingEditor(recording: AudioRecording) {
+    setEditingRecording(recording);
+    setRecordingTitleDraft(recording.title);
+    setRecordingTeacherDraft(recording.teacher || "");
+    setRecordingSubjectDraft(recording.subject || "");
+  }
+
+  function saveRecordingDetails() {
+    if (!editingRecording) return;
+    const title = recordingTitleDraft.trim();
+    if (!title) {
+      Alert.alert("Kayıt adı gerekli", "Kaydı kolayca bulabilmek için bir ad yaz.");
+      return;
+    }
+    setRecordings((current) => current.map((item) => item.id === editingRecording.id
+      ? { ...item, title, teacher: recordingTeacherDraft.trim() || undefined, subject: recordingSubjectDraft.trim() || undefined }
+      : item));
+    setEditingRecording(null);
   }
 
   async function shareRecording(recording: AudioRecording) {
@@ -366,11 +392,6 @@ export default function App() {
           </ScrollView>
         ) : tab === "notes" ? (
           <View style={styles.content}>
-            <View style={styles.introCard}>
-              <View style={styles.introIcon}><Text style={styles.introIconText}>✎</Text></View>
-              <Text style={styles.introTitle}>Derslerini tek yerde topla</Text>
-              <Text style={styles.introBody}>Not al, kayıt ve metin araçlarına aynı çalışma alanından ulaş.</Text>
-            </View>
             <TextInput
               value={search}
               onChangeText={setSearch}
@@ -411,9 +432,11 @@ export default function App() {
                 <View style={styles.noteGlyph}><Text style={styles.noteGlyphText}>◉</Text></View>
                 <View style={styles.noteInfo}>
                   <Text style={styles.noteTitle} numberOfLines={1}>{recording.title}</Text>
+                  <Text style={styles.notePreview}>{[recording.subject, recording.teacher ? "Hoca: " + recording.teacher : ""].filter(Boolean).join(" · ") || "Ders/öğretim görevlisi eklenmedi"}</Text>
                   <Text style={styles.notePreview}>{new Date(recording.createdAt).toLocaleString("tr-TR")}</Text>
                 </View>
                 <AudioRecordingPlayer uri={recording.uri} />
+                <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => openRecordingEditor(recording)}><Text style={styles.recordingShareText}>Düzenle</Text></Pressable>
                 <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => createNoteFromRecording(recording)}><Text style={styles.recordingShareText}>Not yaz</Text></Pressable>
                 <Pressable accessibilityRole="button" style={styles.recordingShare} disabled={!!transcribingId} onPress={() => transcribeRecording(recording)}>
                   <Text style={styles.recordingShareText}>{transcribingId === recording.id ? "Çözülüyor %" + transcriptionProgress : "Yazıya çevir"}</Text>
@@ -443,6 +466,23 @@ export default function App() {
           </View>
         )}
 
+        <Modal visible={!!editingRecording} animationType="slide" transparent onRequestClose={() => setEditingRecording(null)}>
+          <View style={styles.recordingModalBackdrop}>
+            <View style={styles.recordingModalCard}>
+              <Text style={styles.previewTitle}>Kaydı düzenle</Text>
+              <Text style={styles.modalLabel}>Kayıt adı *</Text>
+              <TextInput value={recordingTitleDraft} onChangeText={setRecordingTitleDraft} placeholder="Örn. Cumhuriyet Tarihi — 3. hafta" style={styles.modalInput} />
+              <Text style={styles.modalLabel}>Ders / konu</Text>
+              <TextInput value={recordingSubjectDraft} onChangeText={setRecordingSubjectDraft} placeholder="Örn. Atatürk İlkeleri" style={styles.modalInput} />
+              <Text style={styles.modalLabel}>Hoca / konuşmacı</Text>
+              <TextInput value={recordingTeacherDraft} onChangeText={setRecordingTeacherDraft} placeholder="Örn. Dr. Ayşe Yılmaz" style={styles.modalInput} />
+              <View style={styles.modalActions}>
+                <Pressable style={styles.backButton} onPress={() => setEditingRecording(null)}><Text style={styles.backButtonText}>Vazgeç</Text></Pressable>
+                <Pressable style={styles.addButton} onPress={saveRecordingDetails}><Text style={styles.addButtonText}>Kaydet</Text></Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
         {selectedNote ? (
           <Modal visible={previewVisible} animationType="slide" onRequestClose={() => setPreviewVisible(false)}><SafeAreaView style={styles.previewSafe}><View style={styles.previewHeader}><Text style={styles.previewTitle}>Not önizlemesi</Text><Pressable style={styles.backButton} onPress={() => setPreviewVisible(false)}><Text style={styles.backButtonText}>Kapat</Text></Pressable></View><WebView originWhitelist={["*"]} source={{ html: makePreviewHtml(selectedNote) }} style={styles.previewWeb} /><Pressable style={styles.exportButton} onPress={printSelectedNote}><Text style={styles.exportButtonText}>Yazdır</Text></Pressable></SafeAreaView></Modal>
         ) : null}
@@ -493,11 +533,11 @@ const styles = StyleSheet.create({
   recordingShareText: { color: "#6339B8", fontSize: 12, fontWeight: "800" },
   recordingDelete: { backgroundColor: "#FCE9EC", paddingHorizontal: 10, paddingVertical: 9, borderRadius: 10 },
   recordingDeleteText: { color: "#B4233B", fontSize: 12, fontWeight: "800" },
-  introCard: { backgroundColor: "#2D2043", borderRadius: 22, padding: 20, marginBottom: 20 },
-  introIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: "#4A3767", alignItems: "center", justifyContent: "center", marginBottom: 14 },
-  introIconText: { color: "#FFFFFF", fontSize: 22 },
-  introTitle: { color: "#FFFFFF", fontSize: 20, fontWeight: "800", marginBottom: 7 },
-  introBody: { color: "#D5CBE5", fontSize: 13, lineHeight: 19 },
+  recordingModalBackdrop: { flex: 1, justifyContent: "center", padding: 20, backgroundColor: "rgba(24, 16, 38, 0.45)" },
+  recordingModalCard: { backgroundColor: "#FFFFFF", borderRadius: 20, padding: 20, gap: 9 },
+  modalLabel: { color: "#4D415E", fontSize: 12, fontWeight: "800", marginTop: 4 },
+  modalInput: { backgroundColor: "#F8F6FB", borderColor: "#EAE5F2", borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11, color: "#2B203B" },
+  modalActions: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: 10, marginTop: 12 },
   search: { backgroundColor: "#FFFFFF", borderColor: "#EAE5F2", borderWidth: 1, borderRadius: 14, paddingHorizontal: 15, paddingVertical: 13, color: "#241A35", fontSize: 14, marginBottom: 22 },
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
   sectionTitle: { fontSize: 11, fontWeight: "800", letterSpacing: 1.3, color: "#817792" },
