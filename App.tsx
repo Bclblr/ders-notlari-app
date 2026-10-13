@@ -19,6 +19,8 @@ export default function App() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [storageReady, setStorageReady] = useState(false);
   const [storageMessage, setStorageMessage] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -45,9 +47,6 @@ export default function App() {
       setStorageMessage("Notlar cihaza kaydedilemedi. Cihazında boş alan olduğundan emin ol.");
     });
   }, [notes, storageReady]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-
   const selectedNote = notes.find((note) => note.id === selectedId) ?? null;
   const visibleNotes = useMemo(() => {
     const q = search.trim().toLocaleLowerCase("tr-TR");
