@@ -76,19 +76,17 @@ export default function AudioRecordingEditor({ recording, onClose, onSaveCopy }:
     }
     setBusy(true);
     try {
-      const trimModule = await import("react-native-lossless-trim");
-      if (!trimModule.isAvailable()) {
-        Alert.alert(
-          "Özel uygulama sürümü gerekli",
-          "Zaman çizelgesini Expo Go'da kullanabilirsin; ses dosyasını gerçekten kırpıp kaydetmek için Android/iPhone geliştirme sürümünü derlememiz gerekiyor."
-        );
-        return;
-      }
-      const result = await trimModule.trimAsync(recording.uri, {
-        startMs: Math.round(range.start * 1000),
-        endMs: Math.round(range.end * 1000),
+      const trimModule = await import("react-native-video-trim");
+      const result = await trimModule.trim(recording.uri, {
+        startTime: Math.round(range.start * 1000),
+        endTime: Math.round(range.end * 1000),
+        type: "audio",
+        outputExt: "m4a",
       });
-      const source = new File(result.uri);
+      const outputUri = result.outputPath.startsWith("file://")
+        ? result.outputPath
+        : "file://" + result.outputPath;
+      const source = new File(outputUri);
       const destination = new File(Paths.document, `ders-notlarim-kirpilan-${Date.now()}.m4a`);
       destination.create();
       destination.write(await source.bytes());
@@ -189,7 +187,7 @@ export default function AudioRecordingEditor({ recording, onClose, onSaveCopy }:
           <Pressable disabled={busy || !range.valid} style={[styles.saveButton, (busy || !range.valid) && styles.disabled]} onPress={trimAndSave}>
             <Text style={styles.saveText}>{busy ? "Bölüm kaydediliyor..." : "✂ Seçili bölümü yeni kayıt olarak kaydet"}</Text>
           </Pressable>
-          <Text style={styles.note}>Orijinal kayıt silinmez. Gerçek kırpma, özel geliştirme sürümünde çalışır; Expo Go'da zaman çizelgesi ve dinleme kullanılabilir.</Text>
+          <Text style={styles.note}>Orijinal kayıt silinmez. Gerçek ses kırpma için bu uygulamanın özel Android/iPhone sürümünü kullan. Expo Go yerel kırpma modülünü çalıştıramaz.</Text>
         </ScrollView>
       </View>
     </Modal>
