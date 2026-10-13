@@ -16,6 +16,7 @@ import * as Sharing from "expo-sharing";
 import RichNoteEditor from "./src/components/RichNoteEditor";
 import { createNotePdf } from "./src/services/pdfService";
 import AudioRecorderPanel from "./src/components/AudioRecorderPanel";
+import AudioRecordingPlayer from "./src/components/AudioRecordingPlayer";
 import { loadRecordings, saveRecordings } from "./src/storage/nativeNotesStorage";
 import type { AudioRecording } from "./src/types/recording";
 
@@ -65,6 +66,30 @@ export default function App() {
       });
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    loadRecordings()
+      .then((saved) => {
+        if (!active) return;
+        setRecordings(saved);
+        setRecordingsReady(true);
+      })
+      .catch(() => {
+        if (active) {
+          setStorageMessage("Ses kaydı arşivi okunamadı.");
+          setRecordingsReady(true);
+        }
+      });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!recordingsReady) return;
+    saveRecordings(recordings).catch(() => {
+      setStorageMessage("Ses kaydı bilgileri kaydedilemedi.");
+    });
+  }, [recordings, recordingsReady]);
 
   useEffect(() => {
     if (!storageReady) return;
@@ -271,6 +296,7 @@ export default function App() {
                   <Text style={styles.noteTitle} numberOfLines={1}>{recording.title}</Text>
                   <Text style={styles.notePreview}>{new Date(recording.createdAt).toLocaleString("tr-TR")}</Text>
                 </View>
+                <AudioRecordingPlayer uri={recording.uri} />
                 <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => shareRecording(recording)}>
                   <Text style={styles.recordingShareText}>Paylaş</Text>
                 </Pressable>
