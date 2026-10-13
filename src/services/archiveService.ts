@@ -50,6 +50,7 @@ export async function createFullArchiveFile(notes: Note[], recordings: AudioReco
       title: recording.title,
       teacher: recording.teacher,
       subject: recording.subject,
+      waveform: recording.waveform,
       createdAt: recording.createdAt,
       archivePath,
     });
@@ -97,6 +98,7 @@ export async function restoreFullArchive(uri: string): Promise<{ notes: Note[]; 
       title: item.title,
       teacher: item.teacher,
       subject: item.subject,
+      waveform: item.waveform,
       createdAt: item.createdAt,
       uri: destination.uri,
     });
