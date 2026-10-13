@@ -429,24 +429,29 @@ export default function App() {
               <Text style={styles.empty}>Henüz ses kaydı yok. İlk kaydını yukarıdan başlatabilirsin.</Text>
             ) : recordings.map((recording) => (
               <View key={recording.id} style={styles.recordingRow}>
-                <View style={styles.noteGlyph}><Text style={styles.noteGlyphText}>◉</Text></View>
-                <View style={styles.noteInfo}>
-                  <Text style={styles.noteTitle} numberOfLines={1}>{recording.title}</Text>
-                  <Text style={styles.notePreview}>{[recording.subject, recording.teacher ? "Hoca: " + recording.teacher : ""].filter(Boolean).join(" · ") || "Ders/öğretim görevlisi eklenmedi"}</Text>
-                  <Text style={styles.notePreview}>{new Date(recording.createdAt).toLocaleString("tr-TR")}</Text>
+                <View style={styles.recordingInfoRow}>
+                  <View style={styles.noteGlyph}><Text style={styles.noteGlyphText}>◉</Text></View>
+                  <View style={styles.noteInfo}>
+                    <Text style={styles.noteTitle}>{recording.title?.trim() || "İsimsiz ses kaydı"}</Text>
+                    <Text style={styles.notePreview}>{recording.subject?.trim() ? "Ders: " + recording.subject : "Ders bilgisi eklenmedi"}</Text>
+                    {recording.teacher?.trim() ? <Text style={styles.notePreview}>Hoca: {recording.teacher}</Text> : null}
+                    <Text style={styles.notePreview}>{new Date(recording.createdAt).toLocaleString("tr-TR")}</Text>
+                  </View>
                 </View>
-                <AudioRecordingPlayer uri={recording.uri} />
-                <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => openRecordingEditor(recording)}><Text style={styles.recordingShareText}>Düzenle</Text></Pressable>
-                <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => createNoteFromRecording(recording)}><Text style={styles.recordingShareText}>Not yaz</Text></Pressable>
-                <Pressable accessibilityRole="button" style={styles.recordingShare} disabled={!!transcribingId} onPress={() => transcribeRecording(recording)}>
-                  <Text style={styles.recordingShareText}>{transcribingId === recording.id ? "Çözülüyor %" + transcriptionProgress : "Yazıya çevir"}</Text>
-                </Pressable>
-                <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => shareRecording(recording)}>
-                  <Text style={styles.recordingShareText}>Paylaş</Text>
-                </Pressable>
-                <Pressable accessibilityRole="button" style={styles.recordingDelete} onPress={() => deleteRecording(recording)}>
-                  <Text style={styles.recordingDeleteText}>Sil</Text>
-                </Pressable>
+                <View style={styles.recordingActions}>
+                  <AudioRecordingPlayer uri={recording.uri} />
+                  <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => openRecordingEditor(recording)}><Text style={styles.recordingShareText}>Düzenle</Text></Pressable>
+                  <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => createNoteFromRecording(recording)}><Text style={styles.recordingShareText}>Not yaz</Text></Pressable>
+                  <Pressable accessibilityRole="button" style={styles.recordingShare} disabled={!!transcribingId} onPress={() => transcribeRecording(recording)}>
+                    <Text style={styles.recordingShareText}>{transcribingId === recording.id ? "Çözülüyor %" + transcriptionProgress : "Yazıya çevir"}</Text>
+                  </Pressable>
+                  <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => shareRecording(recording)}>
+                    <Text style={styles.recordingShareText}>Paylaş</Text>
+                  </Pressable>
+                  <Pressable accessibilityRole="button" style={styles.recordingDelete} onPress={() => deleteRecording(recording)}>
+                    <Text style={styles.recordingDeleteText}>Sil</Text>
+                  </Pressable>
+                </View>
               </View>
             ))}
             <Text style={styles.localHint}>Kayıtlar cihazda tutulur. “Yazıya çevir” düğmesi çok dilli Whisper Base ile Türkçe metin üretir; native derleme ve cihaz testi gerekir.</Text>
@@ -528,7 +533,9 @@ const styles = StyleSheet.create({
   content: { flex: 1, paddingHorizontal: 20 },
   recordScreen: { flexGrow: 1, alignItems: "center", paddingHorizontal: 20, paddingBottom: 28, gap: 14 },
   recordingsHeader: { width: "100%", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },
-  recordingRow: { width: "100%", flexDirection: "row", alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 15, borderWidth: 1, borderColor: "#EEE9F5", padding: 12, gap: 10 },
+  recordingRow: { width: "100%", alignSelf: "stretch", flexDirection: "column", alignItems: "stretch", backgroundColor: "#FFFFFF", borderRadius: 15, borderWidth: 1, borderColor: "#EEE9F5", padding: 12, gap: 12 },
+  recordingInfoRow: { width: "100%", flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  recordingActions: { width: "100%", flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 },
   recordingShare: { backgroundColor: "#EEE8F8", paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },
   recordingShareText: { color: "#6339B8", fontSize: 12, fontWeight: "800" },
   recordingDelete: { backgroundColor: "#FCE9EC", paddingHorizontal: 10, paddingVertical: 9, borderRadius: 10 },
