@@ -24,7 +24,7 @@ function initialHtml(value: string): string {
 }
 
 export default function RichNoteEditor({ value, onChange }: Props) {
-  const editorRef = useRef<RichEditorInstance>(null);
+  const editorRef = useRef<RichEditorInstance | null>(null);
 
   return (
     <View style={styles.container}>
