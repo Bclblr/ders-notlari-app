@@ -23,6 +23,14 @@ import { transcribeAudioFile } from "./src/services/transcriptionService";
 
 type Tab = "notes" | "record" | "settings";
 
+function plainTextToHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\r?\n/g, "<br/>");
+}
+
 function htmlToPlainText(value: string): string {
   return value
     .replace(/<br\s*\/?\s*>/gi, " ")
@@ -153,7 +161,7 @@ export default function App() {
       }
       const note = makeNote({
         title: recording.title + " — Çözümleme",
-        body: text.trim(),
+        body: plainTextToHtml(text.trim()),
       });
       setNotes((current) => [note, ...current]);
       setSelectedId(note.id);
