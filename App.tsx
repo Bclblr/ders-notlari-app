@@ -331,6 +331,9 @@ export default function App() {
                 <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => shareRecording(recording)}>
                   <Text style={styles.recordingShareText}>Paylaş</Text>
                 </Pressable>
+                <Pressable accessibilityRole="button" style={styles.recordingDelete} onPress={() => deleteRecording(recording)}>
+                  <Text style={styles.recordingDeleteText}>Sil</Text>
+                </Pressable>
               </View>
             ))}
             <Text style={styles.localHint}>Kayıtlar cihazda tutulur. “Not yaz” ile kayda bağlı düzenlenebilir bir not açabilirsin; otomatik çevrimdışı yazıya çevirme henüz eklenmedi.</Text>
@@ -390,6 +393,8 @@ const styles = StyleSheet.create({
   recordingRow: { width: "100%", flexDirection: "row", alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 15, borderWidth: 1, borderColor: "#EEE9F5", padding: 12, gap: 10 },
   recordingShare: { backgroundColor: "#EEE8F8", paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },
   recordingShareText: { color: "#6339B8", fontSize: 12, fontWeight: "800" },
+  recordingDelete: { backgroundColor: "#FCE9EC", paddingHorizontal: 10, paddingVertical: 9, borderRadius: 10 },
+  recordingDeleteText: { color: "#B4233B", fontSize: 12, fontWeight: "800" },
   recordingDelete: { backgroundColor: "#FCE9EC", paddingHorizontal: 10, paddingVertical: 9, borderRadius: 10 },
   recordingDeleteText: { color: "#B4233B", fontSize: 12, fontWeight: "800" },
   introCard: { backgroundColor: "#2D2043", borderRadius: 22, padding: 20, marginBottom: 20 },
