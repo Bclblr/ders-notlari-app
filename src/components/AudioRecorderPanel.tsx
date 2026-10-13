@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
@@ -9,7 +9,7 @@ import {
 } from "expo-audio";
 
 type AudioRecorderPanelProps = {
-  onRecordingSaved: (uri: string) => void;
+  onRecordingSaved: (uri: string, details: { title: string; teacher?: string; subject?: string }) => void;
 };
 
 function formatDuration(milliseconds: number): string {
@@ -26,6 +26,8 @@ export default function AudioRecorderPanel({ onRecordingSaved }: AudioRecorderPa
   });
   const state = useAudioRecorderState(recorder);
   const [busy, setBusy] = useState(false);
+  const [subject, setSubject] = useState("");
+  const [teacher, setTeacher] = useState("");
 
   async function startRecording() {
     if (busy || state.isRecording) return;
@@ -52,8 +54,12 @@ export default function AudioRecorderPanel({ onRecordingSaved }: AudioRecorderPa
     try {
       await recorder.stop();
       if (recorder.uri) {
-        onRecordingSaved(recorder.uri);
-        Alert.alert("Kayıt tamamlandı", "Ses dosyası uygulamanın yerel belge alanına kaydedildi.");
+        const cleanSubject = subject.trim();
+        const cleanTeacher = teacher.trim();
+        const fallback = "Ders kaydı " + new Date().toLocaleDateString("tr-TR") + " " + new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+        const title = cleanSubject ? cleanSubject + (cleanTeacher ? " — " + cleanTeacher : "") : fallback;
+        onRecordingSaved(recorder.uri, { title, subject: cleanSubject || undefined, teacher: cleanTeacher || undefined });
+        Alert.alert("Kayıt tamamlandı", "Kayıt adı ve ders bilgileriyle arşive eklendi.");
       } else {
         Alert.alert("Kayıt bulunamadı", "Kayıt durdu ancak dosya yolu alınamadı.");
       }
@@ -74,8 +80,10 @@ export default function AudioRecorderPanel({ onRecordingSaved }: AudioRecorderPa
       <Text style={styles.caption}>
         {state.isRecording
           ? "Dersi bitirdiğinde kaydı durdur."
-          : "Mikrofon izni vererek yeni bir ders kaydı başlat."}
+          : "Kayda başlamadan ders/konu ve hocayı girersen arşivde kolayca bulabilirsin."}
       </Text>
+      <TextInput value={subject} onChangeText={setSubject} editable={!state.isRecording && !busy} placeholder="Ders / konu (örn. Cumhuriyet Tarihi)" placeholderTextColor="#89839A" style={styles.metadataInput} accessibilityLabel="Ders veya konu" />
+      <TextInput value={teacher} onChangeText={setTeacher} editable={!state.isRecording && !busy} placeholder="Hoca / konuşmacı (isteğe bağlı)" placeholderTextColor="#89839A" style={styles.metadataInput} accessibilityLabel="Hoca veya konuşmacı" />
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={state.isRecording ? "Ses kaydını durdur" : "Ses kaydını başlat"}
@@ -99,6 +107,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 21, fontWeight: "800", color: "#2B203B", marginBottom: 10 },
   timer: { fontSize: 34, fontWeight: "800", fontVariant: ["tabular-nums"], color: "#6339B8", marginBottom: 10 },
   caption: { textAlign: "center", color: "#817792", fontSize: 13, lineHeight: 19, marginBottom: 18 },
+  metadataInput: { width: "100%", backgroundColor: "#F8F6FB", borderColor: "#EAE5F2", borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11, color: "#2B203B", marginBottom: 9, fontSize: 13 },
   button: { width: "100%", backgroundColor: "#6339B8", paddingVertical: 15, borderRadius: 14, alignItems: "center" },
   stopButton: { backgroundColor: "#B4233B" },
   disabled: { opacity: 0.55 },
