@@ -37,6 +37,12 @@ export default function AudioRecordingEditor({ recording, onClose, onSaveCopy }:
   const [endText, setEndText] = useState("00:00");
   const [busy, setBusy] = useState(false);
   const [trackWidth, setTrackWidth] = useState(1);
+  const waveformBars = useMemo(() => {
+    const samples = recording?.waveform;
+    if (!samples?.length) return [];
+    const count = Math.min(72, samples.length);
+    return Array.from({ length: count }, (_, index) => samples[Math.floor(index * samples.length / count)] ?? 0.05);
+  }, [recording?.id, recording?.waveform]);
 
   useEffect(() => {
     if (!recording) return;
@@ -134,8 +140,27 @@ export default function AudioRecordingEditor({ recording, onClose, onSaveCopy }:
             onPress={(event) => seekToPosition(event.nativeEvent.locationX)}
             style={styles.track}
           >
-            <View style={[styles.trackProgress, { width: `${duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0}%` }]} />
-            <View style={[styles.playhead, { left: `${duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0}%` }]} />
+            {waveformBars.length > 0 ? (
+              <View pointerEvents="none" style={styles.waveformBars}>
+                {waveformBars.map((peak, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.waveBar,
+                      {
+                        height: Math.max(4, Math.min(24, peak * 26)),
+                        backgroundColor: duration > 0 && index / waveformBars.length <= currentTime / duration ? "#6339B8" : "#B6A0E2",
+                      },
+                    ]}
+                  />
+                ))}
+              </View>
+            ) : (
+              <>
+                <View style={[styles.trackProgress, { width: `${duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0}%` }]} />
+                <View style={[styles.playhead, { left: `${duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0}%` }]} />
+              </>
+            )}
           </Pressable>
           <View style={styles.playControls}>
             <Pressable style={styles.secondaryButton} onPress={() => player.seekTo(Math.max(0, currentTime - 10))}><Text style={styles.secondaryText}>−10 sn</Text></Pressable>
@@ -179,6 +204,8 @@ const styles = StyleSheet.create({
   total: { color: "#817792", fontSize: 14, fontVariant: ["tabular-nums"] },
   track: { height: 30, justifyContent: "center", backgroundColor: "#E5DDF3", borderRadius: 99, overflow: "hidden" },
   trackProgress: { height: "100%", backgroundColor: "#B6A0E2", borderRadius: 99 },
+  waveformBars: { flex: 1, height: "100%", flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 2, paddingHorizontal: 5 },
+  waveBar: { flex: 1, minWidth: 1, maxWidth: 5, borderRadius: 3 },
   playhead: { position: "absolute", top: 0, bottom: 0, width: 3, marginLeft: -1, backgroundColor: "#6339B8" },
   playControls: { flexDirection: "row", alignItems: "center", justifyContent: "center", flexWrap: "wrap", gap: 10, marginBottom: 10 },
   primaryButton: { backgroundColor: "#6339B8", borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 },
