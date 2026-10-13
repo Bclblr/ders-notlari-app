@@ -23,6 +23,7 @@ import RichNoteEditor from "./src/components/RichNoteEditor";
 import { createNotePdf } from "./src/services/pdfService";
 import AudioRecorderPanel from "./src/components/AudioRecorderPanel";
 import AudioRecordingPlayer from "./src/components/AudioRecordingPlayer";
+import AudioRecordingEditor from "./src/components/AudioRecordingEditor";
 import type { AudioRecording } from "./src/types/recording";
 import { transcribeAudioFile } from "./src/services/transcriptionService";
 
@@ -66,6 +67,7 @@ export default function App() {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [archiveBusy, setArchiveBusy] = useState(false);
   const [editingRecording, setEditingRecording] = useState<AudioRecording | null>(null);
+  const [trimmingRecording, setTrimmingRecording] = useState<AudioRecording | null>(null);
   const [recordingTitleDraft, setRecordingTitleDraft] = useState("");
   const [recordingTeacherDraft, setRecordingTeacherDraft] = useState("");
   const [recordingSubjectDraft, setRecordingSubjectDraft] = useState("");
@@ -441,6 +443,7 @@ export default function App() {
                 <View style={styles.recordingActions}>
                   <AudioRecordingPlayer uri={recording.uri} />
                   <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => openRecordingEditor(recording)}><Text style={styles.recordingShareText}>Düzenle</Text></Pressable>
+                  <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => setTrimmingRecording(recording)}><Text style={styles.recordingShareText}>Kırp</Text></Pressable>
                   <Pressable accessibilityRole="button" style={styles.recordingShare} onPress={() => createNoteFromRecording(recording)}><Text style={styles.recordingShareText}>Not yaz</Text></Pressable>
                   <Pressable accessibilityRole="button" style={styles.recordingShare} disabled={!!transcribingId} onPress={() => transcribeRecording(recording)}>
                     <Text style={styles.recordingShareText}>{transcribingId === recording.id ? "Çözülüyor %" + transcriptionProgress : "Yazıya çevir"}</Text>
@@ -471,6 +474,11 @@ export default function App() {
           </View>
         )}
 
+        <AudioRecordingEditor
+          recording={trimmingRecording}
+          onClose={() => setTrimmingRecording(null)}
+          onSaveCopy={(copy) => setRecordings((current) => [copy, ...current])}
+        />
         <Modal visible={!!editingRecording} animationType="slide" transparent onRequestClose={() => setEditingRecording(null)}>
           <View style={styles.recordingModalBackdrop}>
             <View style={styles.recordingModalCard}>
