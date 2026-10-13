@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "Ders Notlarım",
+    "slug": "ders-notlari-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bclblr.dersnotlarim"
+    },
+    "android": {
+      "package": "com.bclblr.dersnotlarim"
+    },
+    "plugins": [],
+    "experiments": {}
+  }
+}
