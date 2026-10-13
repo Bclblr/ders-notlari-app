@@ -48,6 +48,8 @@ export async function createFullArchiveFile(notes: Note[], recordings: AudioReco
     manifest.recordings.push({
       id: recording.id,
       title: recording.title,
+      teacher: recording.teacher,
+      subject: recording.subject,
       createdAt: recording.createdAt,
       archivePath,
     });
@@ -93,6 +95,8 @@ export async function restoreFullArchive(uri: string): Promise<{ notes: Note[]; 
     restoredRecordings.push({
       id: item.id,
       title: item.title,
+      teacher: item.teacher,
+      subject: item.subject,
       createdAt: item.createdAt,
       uri: destination.uri,
     });
