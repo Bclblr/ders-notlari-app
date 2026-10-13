@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import {
   RecordingPresets,
@@ -9,7 +9,7 @@ import {
 } from "expo-audio";
 
 type AudioRecorderPanelProps = {
-  onRecordingSaved: (uri: string, details: { title: string; teacher?: string; subject?: string }) => void;
+  onRecordingSaved: (uri: string, details: { title: string; teacher?: string; subject?: string; waveform?: number[] }) => void;
 };
 
 function formatDuration(milliseconds: number): string {
@@ -22,12 +22,21 @@ function formatDuration(milliseconds: number): string {
 export default function AudioRecorderPanel({ onRecordingSaved }: AudioRecorderPanelProps) {
   const recorder = useAudioRecorder({
     ...RecordingPresets.HIGH_QUALITY,
+    isMeteringEnabled: true,
     directory: "document",
   });
-  const state = useAudioRecorderState(recorder);
+  const state = useAudioRecorderState(recorder, 500);
   const [busy, setBusy] = useState(false);
   const [subject, setSubject] = useState("");
   const [teacher, setTeacher] = useState("");
+  const meteringSamples = useRef<number[]>([]);
+
+  useEffect(() => {
+    if (!state.isRecording || typeof state.metering !== "number") return;
+    const normalized = Math.max(0.04, Math.min(1, (state.metering + 60) / 60));
+    meteringSamples.current.push(normalized);
+    if (meteringSamples.current.length > 12000) meteringSamples.current.shift();
+  }, [state.isRecording, state.metering]);
 
   async function startRecording() {
     if (busy || state.isRecording) return;
@@ -40,6 +49,7 @@ export default function AudioRecorderPanel({ onRecordingSaved }: AudioRecorderPa
       }
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
       await recorder.prepareToRecordAsync();
+      meteringSamples.current = [];
       recorder.record();
     } catch {
       Alert.alert("Kayıt başlatılamadı", "Mikrofon iznini ve cihaz ayarlarını kontrol edip tekrar dene.");
@@ -58,7 +68,7 @@ export default function AudioRecorderPanel({ onRecordingSaved }: AudioRecorderPa
         const cleanTeacher = teacher.trim();
         const fallback = "Ders kaydı " + new Date().toLocaleDateString("tr-TR") + " " + new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
         const title = cleanSubject ? cleanSubject + (cleanTeacher ? " — " + cleanTeacher : "") : fallback;
-        onRecordingSaved(recorder.uri, { title, subject: cleanSubject || undefined, teacher: cleanTeacher || undefined });
+        onRecordingSaved(recorder.uri, { title, subject: cleanSubject || undefined, teacher: cleanTeacher || undefined, waveform: meteringSamples.current.slice() });
         Alert.alert("Kayıt tamamlandı", "Kayıt adı ve ders bilgileriyle arşive eklendi.");
       } else {
         Alert.alert("Kayıt bulunamadı", "Kayıt durdu ancak dosya yolu alınamadı.");
