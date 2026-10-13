@@ -12,7 +12,7 @@ import {
   Modal,
 } from "react-native";
 import { createNote as makeNote, type Note } from "./src/types/note";
-import { createNotesArchiveFile, deleteRecordingFile, loadNotes, saveNotes } from "./src/storage/nativeNotesStorage";
+import { deleteRecordingFile, loadNotes, saveNotes, loadRecordings, saveRecordings } from "./src/storage/nativeNotesStorage";
 import * as Sharing from "expo-sharing";
 import * as DocumentPicker from "expo-document-picker";
 import * as Print from "expo-print";
@@ -23,7 +23,6 @@ import RichNoteEditor from "./src/components/RichNoteEditor";
 import { createNotePdf } from "./src/services/pdfService";
 import AudioRecorderPanel from "./src/components/AudioRecorderPanel";
 import AudioRecordingPlayer from "./src/components/AudioRecordingPlayer";
-import { loadRecordings, saveRecordings } from "./src/storage/nativeNotesStorage";
 import type { AudioRecording } from "./src/types/recording";
 import { transcribeAudioFile } from "./src/services/transcriptionService";
 
