@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Konum Paylaşımı · Ders Notları</title>
+<style>
+body{margin:0;background:#f7f5fc;color:#2b203b;font-family:system-ui,-apple-system,sans-serif;padding:22px 16px}
+main{max-width:540px;margin:0 auto}.card{background:white;border:1px solid #eee9f5;border-radius:18px;padding:18px}
+h1{font-size:26px;margin:0 0 8px}.muted{color:#817792;font-size:14px;line-height:1.6}
+label{display:block;font-size:12px;font-weight:800;margin:18px 0 7px}
+input{width:100%;box-sizing:border-box;background:#faf9fd;border:1px solid #e6e0ef;border-radius:12px;padding:13px;font:inherit}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}button{border:0;border-radius:12px;padding:13px 15px;font-weight:800;background:#6339b8;color:white;cursor:pointer}button.stop{background:#b4233b}button.secondary{background:#eee8f8;color:#6339b8}
+#status{font-size:13px;line-height:1.6;margin-top:15px;color:#4d415e}.note{font-size:12px;line-height:1.6;color:#817792;margin-top:16px}
+</style>
+</head>
+<body><main><section class="card">
+<h1>Konum paylaşımı</h1>
+<p class="muted">Bu sayfa yalnızca kendi telefonunun konumunu kişisel harita paneline gönderir. Başlat'a bastığında tarayıcı konum izni ister. Sayfa açık kaldığı sürece güncellemeler gönderilir.</p>
+<label for="token">Konum erişim anahtarı</label>
+<input id="token" type="password" autocomplete="current-password" placeholder="LOCATION_ACCESS_TOKEN">
+<div class="actions"><button id="start">Paylaşımı başlat</button><button id="stop" class="stop" disabled>Durdur</button><button id="forget" class="secondary">Anahtarı sil</button></div>
+<div id="status" role="status">Henüz konum paylaşılmıyor.</div>
+<p class="note">Konum yalnızca sen başlattığında paylaşılır. Tarayıcıyı kapatırsan veya sayfa arka planda askıya alınırsa güncellemeler durabilir. Konum erişim anahtarını kimseyle paylaşma.</p>
+</section></main>
+<script>
+(() => {
+const endpoint="https://ynvosvngvuywizacyffn.supabase.co/functions/v1/device-location";
+const anon="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inludm9zdm5ndnV5d2l6YWN5ZmZuIiwiaWF0IjoxNzkxOTI2ODY4LCJleHAiOjIxMDc1MDI4Njh9.oYTu-WTtvJk1ISkFKYz19lE7JxUX_zd1ktFum_M74kc";
+const $=id=>document.getElementById(id);let watchId=null;const saved=sessionStorage.getItem("personal-location-access-token");if(saved)$("token").value=saved;
+async function send(pos,token){const r=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json","apikey":anon,"Authorization":"Bearer "+anon,"x-location-token":token},body:JSON.stringify({action:"update",latitude:pos.coords.latitude,longitude:pos.coords.longitude,accuracy:pos.coords.accuracy,recordedAt:new Date(pos.timestamp).toISOString()})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Konum gönderilemedi.");$("status").textContent="Konum güncellendi: "+new Date(pos.timestamp).toLocaleString("tr-TR")+" · doğruluk ±"+Math.round(pos.coords.accuracy||0)+" m";}
+$("start").onclick=()=>{const token=$("token").value.trim();if(token.length<32){$("status").textContent="Geçerli erişim anahtarını gir.";return;}if(!("geolocation" in navigator)){ $("status").textContent="Bu tarayıcı konum özelliğini desteklemiyor.";return;}if(watchId!==null)return;sessionStorage.setItem("personal-location-access-token",token);$("status").textContent="Konum izni bekleniyor…";watchId=navigator.geolocation.watchPosition(pos=>send(pos,token).catch(e=>$("status").textContent=e.message),err=>{$("status").textContent="Konum alınamadı: "+err.message;watchId=null;$("stop").disabled=true;$("start").disabled=false;},{enableHighAccuracy:true,maximumAge:10000,timeout:20000});$("stop").disabled=false;$("start").disabled=true;$("status").textContent="Konum paylaşımı açık. Sayfayı açık tut."};
+$("stop").onclick=()=>{if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;$("stop").disabled=true;$("start").disabled=false;$("status").textContent="Konum paylaşımı durduruldu."};
+$("forget").onclick=()=>{if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;sessionStorage.removeItem("personal-location-access-token");$("token").value="";$("stop").disabled=true;$("start").disabled=false;$("status").textContent="Anahtar bu sekmeden silindi."};
+})();
+</script></body></html>
