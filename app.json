@@ -25,6 +25,12 @@
           "recordAudioAndroid": true,
           "enableBackgroundRecording": false
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Ders Notları, konumunu kişisel harita paneline göndermek için konum izni ister."
+        }
       ]
     ],
     "experiments": {}
