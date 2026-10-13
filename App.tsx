@@ -460,7 +460,7 @@ export default function App() {
             <Text style={styles.localHint}>Kayıtlar cihazda tutulur. “Yazıya çevir” düğmesi çok dilli Whisper Base ile Türkçe metin üretir; native derleme ve cihaz testi gerekir.</Text>
           </ScrollView>
 ) : (
-          <View style={styles.placeholder}>
+          <ScrollView contentContainerStyle={[styles.placeholder, { flexGrow: 1 }]}>
             <View style={styles.micCircle}><Text style={styles.micEmoji}>⚙</Text></View>
             <Text style={styles.placeholderTitle}>Uygulama tercihleri</Text>
             <Text style={styles.placeholderBody}>Temel hedef: internet, hesap veya bulut gerektirmeden cihaz üzerinde çalışmak.</Text>
@@ -472,7 +472,7 @@ export default function App() {
             <Pressable accessibilityRole="button" style={styles.exportButton} onPress={importArchive} disabled={archiveBusy}><Text style={styles.exportButtonText}>↙ Yedekten geri yükle</Text></Pressable>
             <Text style={styles.localHint}>ZIP tam yedeği notları ve ses dosyalarını içerir. Eski JSON yedekleri yalnızca notları geri yükler.</Text>
             <LocationTracker />
-          </View>
+          </ScrollView>
         )}
 
         <AudioRecordingEditor
