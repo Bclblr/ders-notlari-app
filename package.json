@@ -8,7 +8,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "doctor": "expo-doctor"
+    "doctor": "expo-doctor",
+    "download-whisper-model": "node scripts/download-whisper-model.js",
+    "eas-build-post-install": "node scripts/download-whisper-model.js"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -21,7 +23,8 @@
     "react": "19.2.3",
     "react-native": "0.86.2",
     "react-native-pell-rich-editor": "1.10.0",
-    "react-native-webview": "13.16.1"
+    "react-native-webview": "13.16.1",
+    "whisper.rn": "0.7.4"
   },
   "devDependencies": {
     "@types/react": "~19.2.0",
