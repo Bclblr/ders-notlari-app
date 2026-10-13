@@ -87,6 +87,7 @@ export async function restoreFullArchive(uri: string): Promise<{ notes: Note[]; 
     const audioBytes = archive[item.archivePath];
     if (!audioBytes) throw new Error(`Yedekte ses dosyası eksik: ${item.title}`);
     const destination = new File(Paths.document, `ders-notlarim-${safeId(item.id)}.m4a`);
+    if (destination.exists) destination.delete();
     destination.create();
     destination.write(audioBytes);
     restoredRecordings.push({
