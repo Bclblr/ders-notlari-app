@@ -1,0 +1,64 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { Note, NotesArchive } from "../types/note";
+
+const NOTES_STORAGE_KEY = "@ders-notlarim/notes-v1";
+
+/**
+ * Stores notes only in this app's local device storage.
+ * This adapter does not use a server, cloud account, or database.
+ */
+export async function loadNotes(): Promise<Note[]> {
+  const raw = await AsyncStorage.getItem(NOTES_STORAGE_KEY);
+  if (!raw) return [];
+
+  const parsed: unknown = JSON.parse(raw);
+  if (!Array.isArray(parsed)) {
+    throw new Error("Yerel not arşivi beklenen biçimde değil.");
+  }
+
+  return parsed.filter(isNote);
+}
+
+export async function saveNotes(notes: Note[]): Promise<void> {
+  await AsyncStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+}
+
+export async function exportNotesArchive(notes: Note[]): Promise<string> {
+  const archive: NotesArchive = {
+    schemaVersion: 1,
+    notes,
+    exportedAt: new Date().toISOString(),
+  };
+
+  return JSON.stringify(archive, null, 2);
+}
+
+export async function importNotesArchive(json: string): Promise<Note[]> {
+  const parsed: unknown = JSON.parse(json);
+  if (
+    !parsed ||
+    typeof parsed !== "object" ||
+    !("schemaVersion" in parsed) ||
+    parsed.schemaVersion !== 1 ||
+    !("notes" in parsed) ||
+    !Array.isArray(parsed.notes) ||
+    !parsed.notes.every(isNote)
+  ) {
+    throw new Error("Dosya geçerli bir Ders Notlarım arşivi değil.");
+  }
+
+  return parsed.notes;
+}
+
+function isNote(value: unknown): value is Note {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Record<string, unknown>;
+
+  return (
+    typeof item.id === "string" &&
+    typeof item.title === "string" &&
+    typeof item.body === "string" &&
+    typeof item.createdAt === "string" &&
+    typeof item.updatedAt === "string"
+  );
+}
