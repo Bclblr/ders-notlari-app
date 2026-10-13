@@ -1,0 +1,2 @@
+WHISPER_MODEL_PLACEHOLDER_FOR_EXPO_GO_ONLY
+This is not the real model. The EAS build script replaces this file with the multilingual Whisper Base model before native bundling.
