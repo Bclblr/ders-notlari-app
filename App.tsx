@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   SafeAreaView,
   StatusBar,
@@ -9,28 +9,42 @@ import {
   View,
   ScrollView,
 } from "react-native";
-
-type Note = {
-  id: string;
-  title: string;
-  body: string;
-  updatedAt: string;
-};
-
-const initialNotes: Note[] = [
-  {
-    id: "welcome",
-    title: "İlk ders notum",
-    body: "Ders sırasında notlarını burada tutabilirsin.\n\nBu uygulama çevrimdışı çalışacak şekilde geliştiriliyor.",
-    updatedAt: "Yeni",
-  },
-];
+import { createNote as makeNote, type Note } from "./src/types/note";
+import { loadNotes, saveNotes } from "./src/storage/nativeNotesStorage";
 
 type Tab = "notes" | "record" | "settings";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("notes");
-  const [notes, setNotes] = useState<Note[]>(initialNotes);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [storageReady, setStorageReady] = useState(false);
+  const [storageMessage, setStorageMessage] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    loadNotes()
+      .then((savedNotes) => {
+        if (!active) return;
+        const startingNotes = savedNotes.length > 0 ? savedNotes : [makeNote({
+          title: "İlk ders notum",
+          body: "Ders sırasında notlarını burada tutabilirsin.\\n\\nBu uygulama çevrimdışı çalışacak şekilde geliştiriliyor.",
+        })];
+        setNotes(startingNotes);
+        setStorageReady(true);
+      })
+      .catch(() => {
+        if (!active) return;
+        setStorageMessage("Yerel notlar okunamadı. Bağımlılıklar kurulduktan sonra yeniden deneyin.");
+      });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!storageReady) return;
+    saveNotes(notes).catch(() => {
+      setStorageMessage("Notlar cihaza kaydedilemedi. Cihazında boş alan olduğundan emin ol.");
+    });
+  }, [notes, storageReady]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
@@ -44,12 +58,7 @@ export default function App() {
   }, [notes, search]);
 
   function createNote() {
-    const note: Note = {
-      id: String(Date.now()),
-      title: "Yeni ders notu",
-      body: "",
-      updatedAt: "Şimdi",
-    };
+    const note = makeNote({ title: "Yeni ders notu", body: "" });
     setNotes((current) => [note, ...current]);
     setSelectedId(note.id);
     setTab("notes");
@@ -59,7 +68,7 @@ export default function App() {
     if (!selectedId) return;
     setNotes((current) =>
       current.map((note) =>
-        note.id === selectedId ? { ...note, ...changes, updatedAt: "Şimdi" } : note
+        note.id === selectedId ? { ...note, ...changes, updatedAt: new Date().toISOString() } : note
       )
     );
   }
@@ -108,7 +117,7 @@ export default function App() {
               style={styles.bodyInput}
               accessibilityLabel="Not içeriği"
             />
-            <Text style={styles.localHint}>Notlar şimdilik uygulama açıkken bellekte tutulur. Kalıcı yerel kayıt bir sonraki aşamada eklenecek.</Text>
+            <Text style={styles.localHint}>Notlar bu cihazda yerel olarak saklanır. Uygulamayı silmek yerel kayıtları silebilir; dışa aktarma ve yedekleme sonraki aşamada eklenecek.</Text>
           </ScrollView>
         ) : tab === "notes" ? (
           <View style={styles.content}>
