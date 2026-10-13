@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Ders Notlarım",
+    "name": "BBC",
     "slug": "ders-notlari-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -16,7 +16,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Ders Notlarım, dersleri kaydetmek için mikrofon erişimi ister.",
+          "microphonePermission": "BBC, dersleri kaydetmek için mikrofon erişimi ister.",
           "recordAudioAndroid": true,
           "enableBackgroundRecording": false
         }
