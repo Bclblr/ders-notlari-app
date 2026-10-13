@@ -29,7 +29,7 @@ export default function App() {
         if (!active) return;
         const startingNotes = savedNotes.length > 0 ? savedNotes : [makeNote({
           title: "İlk ders notum",
-          body: "Ders sırasında notlarını burada tutabilirsin.\\n\\nBu uygulama çevrimdışı çalışacak şekilde geliştiriliyor.",
+          body: "Ders sırasında notlarını burada tutabilirsin.\n\nBu uygulama çevrimdışı çalışacak şekilde geliştiriliyor.",
         })];
         setNotes(startingNotes);
         setStorageReady(true);
