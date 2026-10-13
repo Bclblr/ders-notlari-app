@@ -35,6 +35,8 @@ export default function RichNoteEditor({ value, onChange }: Props) {
             actions.setBold,
             actions.setItalic,
             actions.setUnderline,
+            actions.heading1,
+            actions.heading2,
             actions.insertBulletsList,
             actions.insertOrderedList,
             actions.undo,
@@ -50,6 +52,11 @@ export default function RichNoteEditor({ value, onChange }: Props) {
           <Pressable accessibilityLabel="Kırmızı yazı rengi" onPress={() => editorRef.current?.setTextColor("#C62845")} style={[styles.colorDot, { backgroundColor: "#C62845" }]} />
           <Pressable accessibilityLabel="Siyah yazı rengi" onPress={() => editorRef.current?.setTextColor("#2B203B")} style={[styles.colorDot, { backgroundColor: "#2B203B" }]} />
         </View>
+      </View>
+      <View style={styles.symbols}>
+        {["→", "←", "§", "¶", "•", "—", "✓", "★", "₺"].map((symbol) => (
+          <Pressable key={symbol} accessibilityLabel={symbol} onPress={() => editorRef.current?.insertText(symbol)} style={styles.symbolButton}><Text style={styles.symbolText}>{symbol}</Text></Pressable>
+        ))}
       </View>
       <RichEditor
         ref={editorRef}
@@ -92,6 +99,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
   },
+  symbols: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: "#FFFFFF", borderBottomWidth: 1, borderBottomColor: "#EEE9F5" },
+  symbolButton: { minWidth: 27, height: 27, paddingHorizontal: 5, alignItems: "center", justifyContent: "center", backgroundColor: "#F0EAFB", borderRadius: 7 },
+  symbolText: { color: "#6339B8", fontSize: 15, fontWeight: "700" },
   colors: {
     flexDirection: "row",
     alignItems: "center",
