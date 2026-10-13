@@ -38,6 +38,11 @@ export async function saveRecordings(recordings: AudioRecording[]): Promise<void
   await AsyncStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
 }
 
+export async function deleteRecordingFile(uri: string): Promise<void> {
+  const file = new File(uri);
+  if (file.exists) file.delete();
+}
+
 export async function exportNotesArchive(notes: Note[]): Promise<string> {
   const archive: NotesArchive = {
     schemaVersion: 1,
