@@ -8,9 +8,11 @@ import {
   Pressable,
   View,
   ScrollView,
+  Alert,
 } from "react-native";
 import { createNote as makeNote, type Note } from "./src/types/note";
-import { loadNotes, saveNotes } from "./src/storage/nativeNotesStorage";
+import { createNotesArchiveFile, loadNotes, saveNotes } from "./src/storage/nativeNotesStorage";
+import * as Sharing from "expo-sharing";
 
 type Tab = "notes" | "record" | "settings";
 
@@ -61,6 +63,43 @@ export default function App() {
     setNotes((current) => [note, ...current]);
     setSelectedId(note.id);
     setTab("notes");
+  }
+
+  function deleteSelectedNote() {
+    if (!selectedNote) return;
+    Alert.alert(
+      "Not silinsin mi?",
+      `“${selectedNote.title || "Başlıksız not"}” kalıcı olarak silinecek.`,
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Sil",
+          style: "destructive",
+          onPress: () => {
+            setNotes((current) => current.filter((note) => note.id !== selectedNote.id));
+            setSelectedId(null);
+          },
+        },
+      ]
+    );
+  }
+
+  async function exportArchive() {
+    try {
+      const uri = await createNotesArchiveFile(notes);
+      const available = await Sharing.isAvailableAsync();
+      if (!available) {
+        Alert.alert("Paylaşım kullanılamıyor", "Bu cihazda paylaşım menüsü açılamadı.");
+        return;
+      }
+      await Sharing.shareAsync(uri, {
+        mimeType: "application/json",
+        dialogTitle: "Ders notları yedeğini paylaş",
+        UTI: "public.json",
+      });
+    } catch {
+      Alert.alert("Dışa aktarma başarısız", "Not arşivi oluşturulamadı. Daha sonra tekrar dene.");
+    }
   }
 
   function updateSelected(changes: Partial<Note>) {
@@ -116,7 +155,10 @@ export default function App() {
               style={styles.bodyInput}
               accessibilityLabel="Not içeriği"
             />
-            <Text style={styles.localHint}>Notlar bu cihazda yerel olarak saklanır. Uygulamayı silmek yerel kayıtları silebilir; dışa aktarma ve yedekleme sonraki aşamada eklenecek.</Text>
+            <Pressable accessibilityRole="button" style={styles.deleteButton} onPress={deleteSelectedNote}>
+              <Text style={styles.deleteButtonText}>Notu sil</Text>
+            </Pressable>
+            <Text style={styles.localHint}>{storageMessage || "Notlar cihazında yerel olarak saklanır. Yedek için Ayarlar bölümünden arşiv oluşturabilirsin."}</Text>
           </ScrollView>
         ) : tab === "notes" ? (
           <View style={styles.content}>
@@ -164,7 +206,11 @@ export default function App() {
             <Text style={styles.placeholderTitle}>Uygulama tercihleri</Text>
             <Text style={styles.placeholderBody}>Temel hedef: internet, hesap veya bulut gerektirmeden cihaz üzerinde çalışmak.</Text>
             <View style={styles.settingRow}><Text style={styles.settingLabel}>Çevrimdışı çalışma</Text><Text style={styles.settingValue}>Hedefleniyor</Text></View>
-            <View style={styles.settingRow}><Text style={styles.settingLabel}>Yerel arşiv</Text><Text style={styles.settingValue}>Planlandı</Text></View>
+            <View style={styles.settingRow}><Text style={styles.settingLabel}>Yerel arşiv</Text><Text style={styles.settingValue}>Hazır</Text></View>
+            <Pressable accessibilityRole="button" style={styles.exportButton} onPress={exportArchive}>
+              <Text style={styles.exportButtonText}>↗ Notları yedekle (JSON)</Text>
+            </Pressable>
+            <Text style={styles.localHint}>Yedek dosyası cihazındaki paylaşım menüsüyle Dosyalar'a veya başka bir konuma kaydedilebilir.</Text>
           </View>
         )}
 
@@ -199,6 +245,10 @@ const styles = StyleSheet.create({
   addButtonText: { color: "#FFFFFF", fontWeight: "800", fontSize: 14 },
   backButton: { backgroundColor: "#EAE3F7", paddingHorizontal: 15, paddingVertical: 10, borderRadius: 12 },
   backButtonText: { color: "#58339D", fontWeight: "800" },
+  deleteButton: { alignSelf: "flex-start", backgroundColor: "#FCE9EC", paddingHorizontal: 15, paddingVertical: 11, borderRadius: 12, marginTop: 14 },
+  deleteButtonText: { color: "#B4233B", fontWeight: "800" },
+  exportButton: { width: "100%", maxWidth: 320, padding: 16, backgroundColor: "#6339B8", borderRadius: 14, alignItems: "center", marginTop: 18 },
+  exportButtonText: { color: "#FFFFFF", fontWeight: "800", fontSize: 14 },
   content: { flex: 1, paddingHorizontal: 20 },
   introCard: { backgroundColor: "#2D2043", borderRadius: 22, padding: 20, marginBottom: 20 },
   introIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: "#4A3767", alignItems: "center", justifyContent: "center", marginBottom: 14 },
