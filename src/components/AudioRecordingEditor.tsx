@@ -71,7 +71,7 @@ export default function AudioRecordingEditor({ recording, onClose, onSaveCopy }:
   async function trimAndSave() {
     if (!recording || busy) return;
     if (!range.valid || range.start === null || range.end === null) {
-      Alert.alert("Zaman aralığını kontrol et", "Başlangıç ve bitişi SS:DD biçiminde değil, dakika:saniye (veya saat:dakika:saniye) biçiminde gir. Bitiş başlangıçtan sonra olmalı ve kayıt süresini aşmamalı.");
+      Alert.alert("Zaman aralığını kontrol et", "Başlangıç ve bitişi dakika:saniye (veya saat:dakika:saniye) biçiminde gir. Bitiş başlangıçtan sonra olmalı ve kayıt süresini aşmamalı.");
       return;
     }
     setBusy(true);
@@ -97,6 +97,13 @@ export default function AudioRecordingEditor({ recording, onClose, onSaveCopy }:
         id: "recording-trim-" + Date.now().toString(36),
         uri: destination.uri,
         title: recording.title + " — kırpılmış",
+        waveform: recording.waveform?.slice(
+          Math.floor((range.start / Math.max(duration, 1)) * recording.waveform.length),
+          Math.max(
+            Math.floor((range.start / Math.max(duration, 1)) * recording.waveform.length) + 1,
+            Math.ceil((range.end / Math.max(duration, 1)) * recording.waveform.length)
+          )
+        ),
         createdAt: new Date().toISOString(),
       };
       onSaveCopy(copy);
